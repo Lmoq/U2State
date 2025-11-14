@@ -3,7 +3,7 @@ from pathlib import Path; sys.path.append( str(Path(__file__).parent.parent) )
 from U2.enums import ActionType, TaskType
 
 
-class Task( dict ):
+class Task_Info( dict ):
 
     __preset__ = {
         "number" : 100,
@@ -44,17 +44,13 @@ class Task( dict ):
         "check_selector" : {},
         "check_selector_timeout" : 5,
 
-        # Task values
-        "next_task_number" : int,
-        "prev_task_number" : int,
-
         "next_wait_time" : 0,
     }
 
 
     def __init__( self, *args, **kwargs ):        
         super().__init__( *args, **kwargs )
-        self |= Task.__preset__
+        self |= Task_Info.__preset__
 
 
     def __getattr__( self, attr ):

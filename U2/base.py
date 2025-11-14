@@ -3,7 +3,7 @@ import traceback, sys, time, subprocess as sb
 from pathlib import Path
 sys.path.append( str(Path(__file__).parent.parent ) )
 
-from U2.process import get_system_info
+from U2.process import get_system_info, system_type
 #from U2.notif import Tracker, Stime
 #from U2.debug import NotifLog
 
@@ -29,8 +29,8 @@ class U2_Device:
 
     @staticmethod
     def get_launch_activity( package_name ):
-        result = sb.run( f"adb shell cmd package resolve-activity --brief {package_name} | tail -1", shell=True, capture_output=True )
-        return result.stdout.decode().strip()
+        result = sb.run( f"adb shell cmd package resolve-activity --brief {package_name}", shell = True, capture_output = True )
+        return result.stdout.decode().strip().splitlines()[-1]
 
 
     def __init__( self, **kwargs ):
@@ -84,9 +84,9 @@ class U2_Device:
                 retries += 1
                 time.sleep( 0.5 )
 
-            if retries > NotifLog.gInfo:
-                #NotifLog.gInfo = retries
-                pass
+            #if retries > NotifLog.gInfo:
+            #    NotifLog.gInfo = retries
+            #    pass
 
         return info
 
