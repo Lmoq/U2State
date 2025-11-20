@@ -2,4 +2,3 @@ adbutils==2.8.9
 lxml==5.4.0
 setuptools==80.7.1
 uiautomator2==3.2.10
-aenum==3.1.16

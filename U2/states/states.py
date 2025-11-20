@@ -3,11 +3,13 @@ from pathlib import Path; sys.path.append( str(Path(__file__).parent.parent.pare
 
 from U2.base import U2_Device
 from U2.enums import Wtype
-from U2.states.state import Task_State
-from U2.states.functions import default_match, click
+
+from U2.states.state import Task_State, Task_Handler
+from U2.states.functions import default_match, click, swipe, write
 
 
 class CheckUI( Task_State ):
+
 
     def __init__( self, **kwargs ):
         self.current_state = None
@@ -21,12 +23,12 @@ class CheckUI( Task_State ):
         super().run( ctx )
 
         tfo = self.current_state.task_info
-        selector = tfo.check_selector
+        selector = self.check_selector
 
         u2 = ctx.u2_session
         print(f"[{self}] Checking uinfo : { selector }")
 
-        ui = u2.waitElement( tfo.check_selector, tfo.check_selector_timeout )
+        ui = u2.waitElement( self.check_selector, tfo.check_selector_timeout )
         
         if ui == None:
             print(f"[{self}] : element not found..reverting to [{self.current_state}]")
@@ -34,18 +36,17 @@ class CheckUI( Task_State ):
         elif ui == "FAILED":
             return self
 
-        print(f"Check succeed : {tfo.check_selector}" )
+        if Task_Handler.multi_bot:
+            Task_Handler.sig_term = True
+            
         return self.next_state 
 
 
 class Task_State_U2( Task_State ):
 
+
     def __init__( self, **kwargs ):
         super().__init__( **kwargs )
-
-
-    def enter( self, ctx ):
-        super().enter( ctx )
 
 
     def callback( self, ctx ):
@@ -77,14 +78,9 @@ class Task_State_U2( Task_State ):
         check_state.next_state = self.next_state
 
         tfo = self.task_info
-        check_state.check_selector = tfo.check_selector or { "text" : tfo.match_selector['text'], "className" : Wtype.text.value }
+        check_state.check_selector = tfo.check_selector
         print( f"Check state for {self}" )
         return check_state
-
-
-    def exit( self, ctx ):
-        super().exit( ctx )
-
 
 
 class ClickUI( Task_State_U2 ):
@@ -99,7 +95,25 @@ class SwipeUI( Task_State_U2 ):
         super().__init__( **kwargs )
 
 
-# Set default callbacks
+class WaitUI( Task_State_U2 ):
+
+    def __init__( self, **kwargs ):
+        super().__init__( **kwargs )
+
+    def next( self, ctx ):
+        return self.next_state
+
+
+class WriteUI( Task_State_U2 ):
+
+    def __init__( self, **kwargs ):
+        super().__init__( **kwargs )
+
+    def run( self, ctx ):
+        self.callback( ctx )
+        return self.next( ctx )
+
+
 ClickUI.callback = click
-
-
+SwipeUI.callback = swipe
+WriteUI.callback = write

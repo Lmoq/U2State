@@ -25,11 +25,10 @@ class Task_Context:
 
 class Task_State:
 
-    def __init__( self, **kwargs ):
-        self.name = ""
 
-        self.next_state: Task_State = None
-        self.task_info: Task_Info = None
+    def __init__( self, **kwargs ):
+        self.next_state: Task_State
+        self.task_info: Task_Info
 
         for k,v in kwargs.items():
             print(k,v)
@@ -41,23 +40,25 @@ class Task_State:
 
     def run( self, ctx ):
         print( f"{self} state run" )
+        pass
 
     def next( self, ctx ):
         print( f"{self} state next" )
-        return self.next_state
+        pass
 
     def exit( self, ctx ):
         print( f"{self} state exit" )
         pass
 
     def __repr__( self ):
-        return self.name or str( self.__class__ ).split(".")[-1][:-2]
+        return str( self.__class__ ).split(".")[-1][:-2]
 
 
 class Task_Handler:
 
     sig_term = False
-    
+    multi_bot = False
+
     def __init__( self ):
         self.ctx = None
         self.active = True
@@ -74,6 +75,16 @@ class Task_Handler:
     def set_state( self, start: Task_State, end: Task_State ):
         self.current_state = start
         self.end_state = end
+
+
+    @staticmethod
+    def chain_states( states_list: list[Task_State] = None, loop:bool = False ):
+        last_index = len( states_list ) - 1
+        
+        for i in range( last_index ):
+            states_list[ i ].next_state = states_list[ i + 1 ]
+
+        states_list[ last_index ].next_state = states_list[0] if loop else None
 
 
     def switch_state( self, next_state: Task_State ):
@@ -95,10 +106,16 @@ class Task_Handler:
         assert self.current_state != None, "State Handler current state should be set first"
 
         while self.active:
-            next_state = self.current_state.run( self.ctx )
+            try:
+                next_state = self.current_state.run( self.ctx )
 
-            if next_state == None:
+                if next_state == None:
+                    break
+                if next_state != self.current_state:
+                    self.switch_state( next_state )
+            except KeyboardInterrupt:
+                Task_Handler.sig_term = True
                 break
-            if next_state != self.current_state:
-                self.switch_state( next_state )
+
+
 

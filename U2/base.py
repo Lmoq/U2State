@@ -10,7 +10,6 @@ from U2.process import get_system_info, system_type
 
 class U2_Device:
 
-    sig_term = False
     device = None # : uiautomator2.Device
 
     target_package = ""
@@ -34,9 +33,6 @@ class U2_Device:
 
 
     def __init__( self, **kwargs ):
-        self.tag = ""
-        self.str = ""
-
         print("U2_Device init")
         get_system_info()
 

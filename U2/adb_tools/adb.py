@@ -56,7 +56,6 @@ def adbSwipeUi( uiBounds : dict, direction : Direction, points : int = 100, dura
             cm = f"input swipe {x} {y} {x+points} {y} {duration}"
         case Direction.down:
             cm = f"input swipe {x} {y} {x} {y+points} {duration}"
-
     exec_( cm )
 
 
@@ -72,7 +71,7 @@ def adbKeyCombo( combo = [], key = None ):
     keyS = " ".join( [f"{k}" for k in combo] )
     keyS += f"; input keyevent {key}" if key else ""
     
-    cm = f"input keycombination '{keyS}'"
+    cm = f"input keycombination {keyS}"
     exec_( cm )
 
 

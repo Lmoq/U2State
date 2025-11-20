@@ -51,6 +51,9 @@ class Task_Info( dict ):
     def __init__( self, *args, **kwargs ):        
         super().__init__( *args, **kwargs )
         self |= Task_Info.__preset__
+        
+        for k,v in kwargs.items():
+            setattr( self, k, v )
 
 
     def __getattr__( self, attr ):
