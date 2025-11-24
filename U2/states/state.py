@@ -31,8 +31,9 @@ class Task_State:
         self.task_info: Task_Info
 
         for k,v in kwargs.items():
-            print(k,v)
             setattr( self, k, v )
+        
+        assert self.task_info != None
 
     def enter( self, ctx ):
         print( f"{self} state enter" )
