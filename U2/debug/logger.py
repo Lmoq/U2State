@@ -16,25 +16,27 @@ class Logger:
     debug_stdout = False
 
 
-    @staticmethod
-    def create_log_path():
-        Logger.debug_path.mkdir( exist_ok = True )
-        print(f"Created log directory {Logger.debug_path}")
+    # To change default path, set_path() must be called first before this
+    @classmethod
+    def init( cls ):
+        cls.create_log_path()
+        cls.init_loggers()
 
 
-    @staticmethod
-    def set_path( new ):
-        Logger.debug_path = Path( new )
+    @classmethod
+    def create_log_path( cls ):
+        cls.debug_path.mkdir( exist_ok = True )
+        print(f"Created log directory {cls.debug_path}")
 
 
-    @staticmethod
-    def init():
-        Logger.create_log_path()
-        Logger.init_loggers()
+    # Must preceed calling init()
+    @classmethod
+    def set_path( cls, new ):
+        cls.debug_path = Path( new )
 
 
-    @staticmethod
-    def init_loggers():
+    @classmethod
+    def init_loggers( cls ):
         # Setup loggers
         info_Logger = logging.getLogger("infoLog")
         debug_Logger = logging.getLogger("debugLog")
@@ -49,6 +51,9 @@ class Logger:
         # Add Handlers
         infLHandler = logging.FileHandler( Path( Logger.debug_path / "info.log") )
         dbgLHandler = logging.FileHandler( Path( Logger.debug_path / "debug.log") )
+        
+        infLHandler.propagate = False
+        dbgLHandler.propagate = False
 
         infLHandler.setLevel( logging.INFO )
         dbgLHandler.setLevel( logging.DEBUG )
@@ -61,8 +66,8 @@ class Logger:
         info_Logger.addHandler( infLHandler )
         debug_Logger.addHandler( dbgLHandler )
 
-        Logger.info_Logger = info_Logger
-        Logger.debug_Logger = debug_Logger
+        cls.info_Logger = info_Logger
+        cls.debug_Logger = debug_Logger
 
 
 def infoLog( message ):
