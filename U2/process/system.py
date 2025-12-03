@@ -2,7 +2,6 @@ import platform
 
 
 def get_system_info():
-    global system_type
 
     system_type = platform.system()
     print(f"\nOperating System: {system_type}")
@@ -23,12 +22,8 @@ def get_system_info():
     print(f"OS Version: {os_version}\n")
 
 
-def get_os_name() -> str:
-    return platform.system()
-
-
 print(f"Getting system type..")
-system_type = get_os_name()
+system_type = platform.system()
 
 if __name__=="__main__":
     pass

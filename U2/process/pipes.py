@@ -2,6 +2,20 @@ import subprocess, os
 from pathlib import Path
 
 
+def check_fifo_pipe( pipe_name ):
+    pipe_dir = Path.home() / "pipes"
+    pipe = pipe_dir / pipe_name
+
+    if not pipe.exists():
+        print(f"Pipe doesn't exist.. {str(pipe)}")
+        if not pipe_dir.exists():
+            pipe_dir.mkdir( exist_ok = True )
+            print(f"Pipe dir doesn't exist {str(pipe_dir)}.. creating diretory..")
+        subprocess.run( f"mkfifo {str(pipe)}", shell = True )
+    else:
+        print("Fifo pipes exists")
+
+
 def start_adb_shell_pipes( system_type: str = None ):
     assert system_type != None, "Providing operating system type is required"
 
@@ -19,19 +33,21 @@ def start_adb_shell_pipes( system_type: str = None ):
     print( "Checking pipes..\n" )
     print(result if result else "N/A")
 
+    pipe_name = "adbpipe"
+    check_fifo_pipe( pipe_name )
+
     if "adb shell" not in result and "tail -f" not in result:  
         print("Pipes not found")
-
         print("Starting pipes\n")
 
         subprocess.Popen(
-            "tail -f /dev/null > ~/pipes/adbpipe",
+            f"tail -f /dev/null > ~/pipes/{pipe_name}",
             shell=True,
             start_new_session=True
         )
 
         subprocess.Popen(
-            "adb shell < ~/pipes/adbpipe",
+            f"adb shell < ~/pipes/{pipe_name}",
             shell=True,
             start_new_session=True
         )
