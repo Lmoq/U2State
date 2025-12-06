@@ -1,13 +1,5 @@
-
-import sys, time#, traceback
-from pathlib import Path; sys.path.append( str(Path(__file__).parent.parent.parent) )
-
 from U2.base import U2_Device
 from U2.task import Task_Info
-#from U2.enums import TaskType, Wtype
-#from U2.states import Task_State
-#from U2.debug import debugLog
-#from U2.process import start_adb_shell_pipes
 
 
 class Task_Context:
@@ -15,8 +7,6 @@ class Task_Context:
     def __init__( self ):
         self.u2_session: U2_Device = None
         self.uinfo: dict = None
-
-        self.current_task_state: str = None
         self.restricted = False
 
         self.start_time_restriction: str = None
@@ -33,7 +23,6 @@ class Task_State:
         for k,v in kwargs.items():
             setattr( self, k, v )
         
-        assert self.task_info != None
 
     def enter( self, ctx ):
         print( f"{self} state enter" )
@@ -60,16 +49,14 @@ class Task_Handler:
     sig_term = False
     multi_bot = False
 
-    def __init__( self ):
-        self.ctx = None
+    def __init__( self, context: Task_Context = None ):
+        self.ctx = context
         self.active = True
 
         self.current_state: Task_State = None
         self.previous_state: Task_State = None
 
         self.end_state: Task_State = None
-
-        self.check_selector = {}
         pass
 
 
@@ -110,10 +97,11 @@ class Task_Handler:
             try:
                 next_state = self.current_state.run( self.ctx )
 
-                if next_state == None:
+                if next_state is None:
                     break
-                if next_state != self.current_state:
+                elif next_state != self.current_state:
                     self.switch_state( next_state )
+
             except KeyboardInterrupt:
                 Task_Handler.sig_term = True
                 break

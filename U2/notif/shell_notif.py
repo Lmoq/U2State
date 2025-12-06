@@ -1,8 +1,4 @@
-import subprocess, sys, pathlib
-
-Path = pathlib.Path
-sys.path.append( str( Path(__file__).parent.parent.parent ) )
-
+import subprocess 
 from U2.process import system_type
 
 
