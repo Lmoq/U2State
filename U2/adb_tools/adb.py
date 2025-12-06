@@ -1,5 +1,4 @@
-import os, subprocess as sb, sys, time
-from pathlib import Path; sys.path.append( str(Path(__file__).parent.parent.parent) )
+import os, subprocess as sb, time
 
 from U2.enums import Direction
 from U2.process import system_type
@@ -72,6 +71,12 @@ def adbKeyCombo( combo = [], key = None ):
     keyS += f"; input keyevent {key}" if key else ""
     
     cm = f"input keycombination {keyS}"
+    exec_( cm )
+
+
+def adbKeyPress( key = None ):
+    # Single key press
+    cm = f"input keyevent {key}"
     exec_( cm )
 
 

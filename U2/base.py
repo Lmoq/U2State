@@ -1,29 +1,26 @@
-import traceback, sys, time, subprocess as sb
-
-from pathlib import Path
-sys.path.append( str(Path(__file__).parent.parent ) )
+import traceback, time, sys, subprocess as sb
 
 from U2.process import get_system_info, system_type
-#from U2.notif import Tracker, Stime
-#from U2.debug import NotifLog
+from U2.notif import NotifLog
 
 
 class U2_Device:
 
-    device = None # : uiautomator2.Device
+    _device = None # : uiautomator2.Device
+    _target_package = ""
+    _launch_activity = ""
 
-    target_package = ""
-    launch_activity = ""
 
+    @classmethod
+    def init_device_session( cls, device = None, package_name = None ):
+        # Initialization of shared ( class level attribute ) device and target_package
+        assert device is not None, "Device parameter must not be None"
 
-    @staticmethod
-    def init_device_session( device = None, package_name = None ):
-        # Assign device attribute infos
-        U2_Device.device = device
-        package = package_name if package_name else device.info['currentPackageName'] 
+        cls._device = device
+        package = package_name if package_name else device.info["currentPackageName"] 
         
-        U2_Device.target_package = package
-        U2_Device.launch_activity = U2_Device.get_launch_activity( package )
+        cls._target_package = package
+        cls._launch_activity = cls.get_launch_activity( package )
 
 
     @staticmethod
@@ -32,15 +29,77 @@ class U2_Device:
         return result.stdout.decode().strip().splitlines()[-1]
 
 
-    def __init__( self, **kwargs ):
-        print("U2_Device init")
-        get_system_info()
+    def __init__( self, device = None, package_name: str = None ):
+        # Allows to have an option to initialize instance level attributes, 
+        # takes precedence over class level even after being set
+        if device is not None:
 
-        for k,v in kwargs.items():
-            setattr( self, k, v )
+            if type(self)._device is not None:
+                print(f"Notice: {type(self)} already has class attribute of device.. proceeding to set instance level attr")
+            self._instance_device = device
+
+            if package_name is not None:
+                self._instance_target_package = package_name
+            else:
+                self._instance_target_package = device.info["currentPackageName"]
+            self._instance_launch_activity = self.get_launch_activity( self._instance_target_package )
 
 
-    def waitElement( self, selector, timeout=0 ):
+    @property
+    def device( self ):
+        # Attribute look up, instance attribute takes precedence over class attribute
+        if getattr( self, "_instance_device", None ) is not None:
+
+            print( "Returning instance level attr device" )
+            return self._instance_device
+
+        print( "Returning class level attr device" )
+        return type( self )._device
+
+
+    @device.setter
+    def device( self, device ):
+        # Set instance-level device attr
+        self._instance_device = device
+        
+
+    @property
+    def target_package( self ):
+        # Attribute look up, instance attribute takes precedence over class attribute
+        if getattr( self, "_instance_target_package", None ) is not None:
+
+            print( f"Returning instance level attr target_package" )
+            return self._instance_target_package
+
+        print( "Returning class level attr target_package" )
+        return type( self )._target_package
+
+
+    @target_package.setter
+    def target_package( self, package_name ):
+        # Set instance-level target_package attr
+        self._instance_target_package = package_name
+
+
+    @property
+    def launch_activity( self ):
+        # Attribute look up, instance attribute takes precedence over class attribute
+        if getattr( self, "_instance_launch_activity", None ) is not None:
+            
+            print( "Returning instance level attr launch_activity" )
+            return self._instance_launch_activity
+
+        print( "Returning class level attr launch_activity" )
+        return type( self )._launch_activity
+
+
+    @launch_activity.setter
+    def launch_activity( self, launch_activity ):
+        # Set instance-level launch_activity attr
+        self._instance_launch_activity = launch_activity
+
+
+    def waitElement( self, selector: dict = None, timeout=0 ):
         # Wait until ui element exists then returns UiObject
         try: 
             ui = self.device( **selector )
@@ -51,10 +110,11 @@ class U2_Device:
         
         except Exception as e:
             traceback.print_exception(type(e), e, e.__traceback__, file=sys.stdout)
+            time.sleep(1)
             return 'FAILED'
 
 
-    def waitSiblingElement( self, base={}, sibling={}, timeout=0 ):
+    def waitSiblingElement( self, base: dict = None, sibling: dict = None, timeout=0 ):
         try:
             ui = self.device( **base ).sibling( **sibling )
 
@@ -85,11 +145,6 @@ class U2_Device:
             #    pass
 
         return info
-
-
-    def __repr__( self ):
-        return self.str or self.tag or str( self.__class__ ).split(".")[-1][:-2]
-
 
 
 if __name__=='__main__':

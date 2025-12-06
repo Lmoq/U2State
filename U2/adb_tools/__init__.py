@@ -2,6 +2,7 @@ from .adb import(
     adbClick,
     adbClickNoUi,
     adbKeyCombo,
+    adbKeyPress,
     adbSwipeUi,
     vibrate, 
     adbType,
