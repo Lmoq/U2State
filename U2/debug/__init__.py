@@ -1,5 +1,6 @@
 from .logger import (
     Logger,
     infoLog,
-    debugLog
+    debugLog,
+    printLog
 )
