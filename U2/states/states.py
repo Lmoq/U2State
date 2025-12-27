@@ -1,42 +1,6 @@
-from U2.base import U2_Device
-from U2.enums import Wtype
-
-from U2.states.state import Task_State, Task_Handler
-from U2.states.functions import default_match, click, swipe, write
-
-
-class CheckUI( Task_State ):
-
-
-    def __init__( self, **kwargs ):
-        self.current_state = None
-        self.next_state = None
-
-        self.check_selector = {}
-        super().__init__( **kwargs )
-
-
-    def run( self, ctx ):
-        super().run( ctx )
-
-        tfo = self.current_state.task_info
-        selector = self.check_selector
-
-        u2 = ctx.u2_session
-        print(f"[{self}] Checking uinfo : { selector }")
-
-        ui = u2.waitElement( self.check_selector, tfo.check_selector_timeout )
-        
-        if ui == None:
-            print(f"[{self}] : element not found..reverting to [{self.current_state}]")
-            return self.current_state
-        elif ui == "FAILED":
-            return self
-
-        if Task_Handler.multi_bot:
-            Task_Handler.sig_term = True
-            
-        return self.next_state 
+from U2.states.state import Task_State
+from U2.states.context import Session
+from U2.debug import infoLog, debugLog, printLog
 
 
 class Task_State_U2( Task_State ):
@@ -46,71 +10,66 @@ class Task_State_U2( Task_State ):
         super().__init__( **kwargs )
 
 
-    def callback( self, ctx ):
-        pass
-
-
-    def run( self, ctx ):
-        super().run( ctx )
+    def run( self, ctx ) -> Task_State:
         tfo = self.task_info
 
-        uinfo = default_match( self, ctx.u2_session, tfo.match_selector, tfo.match_selector_timeout )
-        
-        if not uinfo:
-            print(f"[{self}] : element not found, rerunning...")
-            return self
+        uinfo = ctx.search_element( tfo.match_selector, tfo.match_selector_timeout )
 
-        print(f"[{self}] parsing uinfo : { uinfo['text'] or uinfo['contentDescription'] }")
+        if uinfo is None:
+            printLog( f"<<{self} element not found>> rerunning .." )
+
+        printLog( f"Ui found { uinfo['text'] or uinfo['contentDescription'] }" )
 
         ctx.uinfo = uinfo
         self.callback( ctx )
-
+        
         return self.next( ctx )
 
 
-    def next( self, ctx ):
-        check_state = CheckUI()
+    def next( self, ctx ) -> Task_State:
+        check = Check( desc = f"Check task for {self}" )
 
-        check_state.current_state = self
-        check_state.next_state = self.next_state
+        check.current_state = self
+        check.next_state = self.next_state
 
-        tfo = self.task_info
-        check_state.check_selector = tfo.check_selector
-        print( f"Check state for {self}" )
-        return check_state
+        return check
 
 
-class ClickUI( Task_State_U2 ):
-
-    def __init__( self, **kwargs ):
-        super().__init__( **kwargs )
+class Check( Task_State ):
 
 
-class SwipeUI( Task_State_U2 ):
+    def __init__( self, desc = None ):
+        self.desc: str = desc
 
-    def __init__( self, **kwargs ):
-        super().__init__( **kwargs )
+        self.current_state: Task_State = None
+        self.next_state: Task_State = None
 
 
-class WaitUI( Task_State_U2 ):
+    def run( self, ctx ) -> Task_State:
+        tfo = self.current_state.task_info
 
-    def __init__( self, **kwargs ):
-        super().__init__( **kwargs )
+        ui = ctx.search_element( tfo.check_selector, tfo.check_selector_timeout )
+        
+        if ui is None:
+            infoLog( f"Check selector not found reverting to <<{self.current_state}>>" )
+            return self.current_state
 
-    def next( self, ctx ):
+        elif ui == "FAILED":
+            infoLog( f"Check error" )
+            return self
+
         return self.next_state
 
 
-class WriteUI( Task_State_U2 ):
+class Click( Task_State_U2 ):
 
     def __init__( self, **kwargs ):
         super().__init__( **kwargs )
 
-    def run( self, ctx ):
-        self.callback( ctx )
-        return self.next( ctx )
+    def callback( self, ctx ):
+        ctx.clickUI()
+        
 
 
-ClickUI.callback = click
-SwipeUI.callback = swipe
-WriteUI.callback = write
+
+

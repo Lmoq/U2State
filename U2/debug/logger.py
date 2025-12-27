@@ -10,6 +10,9 @@ class Logger:
     debug_Logger: logging.Logger = None
     stream_Logger: logging.Logger = None
 
+    # Custom logging level
+    STREAM = 5
+
     # If set to True logs will also be displayed on standard output
     stdout: bool = False
 
@@ -22,6 +25,12 @@ class Logger:
     def init( cls ):
         cls.create_log_dir()
         cls.init_loggers()
+
+
+    """Disables any logging levels eg. [ logging.WARNING, ]"""
+    def disable_levels( levels: list = None ):
+        assert len( levels ) > 0
+        for level in levels: logging.disable( level )
 
 
     @classmethod
@@ -46,7 +55,7 @@ class Logger:
         stream_logger = logging.getLogger( "streamLogger" )
 
         # Custom level
-        stream_level = 5
+        stream_level = cls.STREAM
 
         cls.addFileHandler( info_logger, logging.INFO, "info.log", msg_format, date_format, False )
         cls.addFileHandler( debug_logger, logging.DEBUG, "debug.log", msg_format, date_format, False )
@@ -113,7 +122,3 @@ def debugLog( message ):
 
 def printLog( message ):
     Logger.stream_Logger.stream( message )
-
-
-
-

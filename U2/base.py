@@ -1,7 +1,8 @@
 import traceback, time, sys, subprocess as sb
-
 from U2.process import get_system_info, system_type
+
 from U2.notif import NotifLog
+from U2.debug import Logger, printLog
 
 
 class U2_Device:
@@ -17,7 +18,7 @@ class U2_Device:
         assert device is not None, "Device parameter must not be None"
 
         cls._device = device
-        package = package_name if package_name else device.info["currentPackageName"] 
+        package = package_name or device.info["currentPackageName"] 
         
         cls._target_package = package
         cls._launch_activity = cls.get_launch_activity( package )
@@ -35,13 +36,10 @@ class U2_Device:
         if device is not None:
 
             if type(self)._device is not None:
-                print(f"Notice: {type(self)} already has class attribute of device.. proceeding to set instance level attr")
+                printLog(f"Notice: {type(self)} already has class attribute of device.. proceeding to set instance level attr")
             self._instance_device = device
 
-            if package_name is not None:
-                self._instance_target_package = package_name
-            else:
-                self._instance_target_package = device.info["currentPackageName"]
+            self._instance_target_package = package_name or device.info["currentPackageName"]
             self._instance_launch_activity = self.get_launch_activity( self._instance_target_package )
 
 
@@ -49,11 +47,8 @@ class U2_Device:
     def device( self ):
         # Attribute look up, instance attribute takes precedence over class attribute
         if getattr( self, "_instance_device", None ) is not None:
-
-            print( "Returning instance level attr device" )
             return self._instance_device
 
-        print( "Returning class level attr device" )
         return type( self )._device
 
 
@@ -67,11 +62,8 @@ class U2_Device:
     def target_package( self ):
         # Attribute look up, instance attribute takes precedence over class attribute
         if getattr( self, "_instance_target_package", None ) is not None:
-
-            print( f"Returning instance level attr target_package" )
             return self._instance_target_package
 
-        print( "Returning class level attr target_package" )
         return type( self )._target_package
 
 
@@ -85,11 +77,8 @@ class U2_Device:
     def launch_activity( self ):
         # Attribute look up, instance attribute takes precedence over class attribute
         if getattr( self, "_instance_launch_activity", None ) is not None:
-            
-            print( "Returning instance level attr launch_activity" )
             return self._instance_launch_activity
 
-        print( "Returning class level attr launch_activity" )
         return type( self )._launch_activity
 
 

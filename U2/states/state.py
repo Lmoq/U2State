@@ -1,110 +1,51 @@
-from U2.base import U2_Device
 from U2.task import Task_Info
+from U2.debug import printLog, infoLog, debugLog
 
 
-class Task_Context:
-
-    def __init__( self ):
-        self.u2_session: U2_Device = None
-        self.uinfo: dict = None
-        self.restricted = False
-
-        self.start_time_restriction: str = None
-        self.end_time_restriction: str = None
+class Task_State():
 
 
-class Task_State:
+    def __init__( self, task_info: Task_Info = None, desc = None, next_state: "Task_State" = None ):
+        self.task_info = task_info
+        self.desc = desc
+        self.next_state = next_state
 
-
-    def __init__( self, **kwargs ):
-        self.next_state: Task_State
-        self.task_info: Task_Info
-
-        for k,v in kwargs.items():
-            setattr( self, k, v )
-        
 
     def enter( self, ctx ):
-        print( f"{self} state enter" )
-        pass
+        printLog( f"Entering <<{self}>>" )
+
 
     def run( self, ctx ):
-        print( f"{self} state run" )
+        printLog( f"Executing <<{self}>>" )
         pass
+
+
+    def callback( self, ctx ):
+        pass
+
 
     def next( self, ctx ):
-        print( f"{self} state next" )
         pass
+
 
     def exit( self, ctx ):
-        print( f"{self} state exit" )
-        pass
+        printLog( f"Exiting <<{self.desc}>> task" )
+
 
     def __repr__( self ):
-        return str( self.__class__ ).split(".")[-1][:-2]
+        return self.desc or str( type( self ) )
 
 
-class Task_Handler:
-
-    sig_term = False
-    multi_bot = False
-
-    def __init__( self, context: Task_Context = None ):
-        self.ctx = context
-        self.active = True
-
-        self.current_state: Task_State = None
-        self.previous_state: Task_State = None
-
-        self.end_state: Task_State = None
-        pass
-
-
-    def set_state( self, start: Task_State, end: Task_State ):
-        self.current_state = start
-        self.end_state = end
-
-
-    @staticmethod
-    def chain_states( states_list: list[Task_State] = None, loop:bool = False ):
-        last_index = len( states_list ) - 1
-        
-        for i in range( last_index ):
-            states_list[ i ].next_state = states_list[ i + 1 ]
-
-        states_list[ last_index ].next_state = states_list[0] if loop else None
-
-
-    def switch_state( self, next_state: Task_State ):
-        log = f"\nTrasitioning to [{next_state}]\n"
-        print(log)
-
-        # Terminate current running state
-        self.current_state.exit( self.ctx )
-        
-        # Transition to next state
-        next_state.enter( self.ctx )
-
-        # Update handler
-        self.previous_state = self.current_state
-        self.current_state = next_state
 
     
-    def state_loop( self ):
-        assert self.current_state != None, "State Handler current state should be set first"
-
-        while self.active:
-            try:
-                next_state = self.current_state.run( self.ctx )
-
-                if next_state is None:
-                    break
-                elif next_state != self.current_state:
-                    self.switch_state( next_state )
-
-            except KeyboardInterrupt:
-                Task_Handler.sig_term = True
-                break
 
 
 
+
+
+
+
+
+
+
+    
