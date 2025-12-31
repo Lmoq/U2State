@@ -1,5 +1,6 @@
 from U2.states.context import Session
 from U2.states.state import Task_State
+from U2.debug import debugLog, infoLog, printLog
 
 
 class Handler:
@@ -36,10 +37,13 @@ class Handler:
 
     def switch_state( self, next_state: Task_State ):
         if self.current_state is None:
-            debugLog( f"Current State is None" )
+            debugLog( f"Switch state : <<Current State>> is None" )
 
         self.previous_state = self.current_state
         self.current_state = next_state
+
+        if not isinstance( self.current_state, Task_State ):
+            debugLog( f"Current State is not Task_State: <<{str(type(self.current_state))}>> | Previous State : <<{self.previous_state}>>" )
 
         self.previous_state.exit( self.ctx )
         self.current_state.enter( self.ctx )
@@ -48,8 +52,10 @@ class Handler:
     def state_loop( self ):
         assert self.current_state != None, "State Handler current state should be set first"
 
+        self.current_state.enter( self.ctx )
         while self.active:
             try:
+                printLog(f"Running current state <<{self.current_state}>>")
                 next_state = self.current_state.run( self.ctx )
 
                 if next_state is None:
@@ -60,4 +66,6 @@ class Handler:
             except KeyboardInterrupt:
                 type( self ).sig_term = True
                 break
+        printLog( "<<Exiting state loop>>" )
+        self.current_state.exit( self.ctx )
         

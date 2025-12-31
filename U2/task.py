@@ -8,17 +8,13 @@ class Task_Info( dict ):
 
         # Parent Match Selector
         "match_selector" : {},
-        "match_alt" : {},
+        "match_alt_selector" : {},
         "match_selector_timeout" : 10,
 
-        "match_class_inclusion_list" : [],
-        "match_function" : None,
-
-        "next_function" : None,
+        "class_name_delimiter" : [],
 
         # Actions
         "action_type" : ActionType.action,
-        "action_match_selector" : {},
 
             # Click
         "offsetx" : 0,
@@ -33,10 +29,10 @@ class Task_Info( dict ):
 
             # Write
         "write_text" : "",
-
-        # Callback function
-        "callback" : None,
-        "bHandle_callback" : True,
+            
+            # Keys
+        "key" : "",
+        "keyCombo" : [],
 
         # Check
         "check_selector" : {},

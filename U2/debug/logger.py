@@ -11,7 +11,7 @@ class Logger:
     stream_Logger: logging.Logger = None
 
     # Custom logging level
-    STREAM = 5
+    STREAM = 10000
 
     # If set to True logs will also be displayed on standard output
     stdout: bool = False
@@ -112,7 +112,6 @@ def infoLog( message ):
     Logger.info_Logger.info( message )
     if Logger.stdout or Logger.info_stdout:
         printLog( message )
-
 
 def debugLog( message ):
     Logger.debug_Logger.debug( message )
