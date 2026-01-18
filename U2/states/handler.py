@@ -55,7 +55,6 @@ class Handler:
         self.current_state.enter( self.ctx )
         while self.active:
             try:
-                printLog(f"Running current state <<{self.current_state}>>")
                 next_state = self.current_state.run( self.ctx )
 
                 if next_state is None:

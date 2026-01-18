@@ -9,6 +9,15 @@ class Wtype( Enum ):
     image = "android.widget.ImageView"
 
 
+def get_wtype_enum( value ) -> str:
+    # Returns enum key through value
+    try:
+        key = Wtype( value ).name
+        return key
+    except:
+        return None
+
+
 class ActionType( Enum ):
     action = 0
     click = 1

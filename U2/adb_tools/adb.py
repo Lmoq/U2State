@@ -103,7 +103,7 @@ def _set_process_caller( system_type ):
     global vibrate
 
     def bash_preset( args ):
-        sb.run( f"echo {args} > ~/pipes/adbpipe &", shell=True )
+        sb.run( f"echo '{args}' > ~/pipes/adbpipe &", shell=True )
 
     def cmd_preset( args ):
         sb.run( f"adb shell {args}", shell=True, stdout=sb.DEVNULL )

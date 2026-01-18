@@ -35,6 +35,20 @@ class Session( U2_Device ):
         return uinfo
 
 
+    def search_sibling_element( self, base:dict = None, sibling:dict = None, timeout = 0 ) -> dict:
+        # Find element
+        ui = self.waitSiblingElement( base, sibling, timeout )
+        
+        if ui in ("FAILED", None):
+            infoLog( "    <<Selector failed>>" )
+            return None
+
+        self.uiObject = ui
+        uinfo = self.getInfo( ui )
+
+        return uinfo
+
+
     def search_qualified_class_names( self, uinfo: dict = None, tfo: Task_Info = None ) -> dict:
         # Limit UiObject selection based on specified classNames
         uinfo = uinfo

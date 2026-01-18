@@ -60,7 +60,7 @@ class Check( Task_State ):
 
     def run( self, ctx ) -> Task_State:
         tfo = self.current_state.task_info
-        ui = ctx.search_element( tfo.check_selector, tfo.check_selector_timeout )
+        ui = ctx.waitElement( tfo.check_selector, tfo.check_selector_timeout )
         
         if ui is None:
             infoLog( f"    <<Check selector>> not found reverting to <<{self.current_state}>>" )

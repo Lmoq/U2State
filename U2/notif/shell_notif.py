@@ -27,11 +27,11 @@ class NotifLog( metaclass = Meta ):
 
 
     @classmethod
-    def set_title( cls, titles: list[tuple[ str, str ]] = [] ):
+    def set_title( cls, titles: dict[ str, str ] = {} ):
         # Set title where tuple[0] is displayed name and tuple[1] is the attribute reference as value
         cls.titles = titles
 
-        for nick, attr in titles:
+        for nick, attr in titles.items():
             setattr( cls, attr, 0 )
 
 
@@ -39,7 +39,7 @@ class NotifLog( metaclass = Meta ):
     def arrange_title( cls ):
         # Displayed values can be changed by modifying the attribute name reference through this class
         tmp = []
-        for nick, title in cls.titles:
+        for nick, title in cls.titles.items():
             tmp.append(f'{ nick.upper() } : { getattr(cls, title) }' )
         cls.title_str = 'U2 ' + ' | ' +  ' | '.join(tmp)
 
