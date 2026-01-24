@@ -25,7 +25,7 @@ def check_dirs( system_type ):
         dev_dump.mkdir( exists_ok = True )
 
 
-def snip_screen( uiBounds:dict = None, name = "snip", overwrite = True ) -> str:
+def snip_screen( uiBounds:dict = None, name = "snip", overwrite = True ) -> Path:
     # uiBounds : Element bounds to mark rectangle
     # If overwrite is False, same filename snips will have incremental name mod
     # returns image_path
@@ -60,7 +60,7 @@ def snip_screen( uiBounds:dict = None, name = "snip", overwrite = True ) -> str:
         )
         cv.imwrite( image_path, cv_image )
 
-    return image_path
+    return Path( image_path )
         
 
 

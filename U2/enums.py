@@ -7,6 +7,7 @@ class Wtype( Enum ):
     button = "android.widget.Button"
     editText = "android.widget.EditText"
     image = "android.widget.ImageView"
+    view = "android.view.View"
 
 
 def get_wtype_enum( value ) -> str:
