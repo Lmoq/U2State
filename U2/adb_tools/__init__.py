@@ -7,4 +7,5 @@ from .adb import(
     vibrate, 
     adbType,
     switch_keyboard,
+    exec_
 )

@@ -93,20 +93,23 @@ vibrate = vib
 def switch_keyboard( toggle : str = "on/off" ):
     # Set default ime
     if toggle.lower() == "on":
-        subprocess.run( "adb shell ime set com.google.android.inputmethod.latin/com.android.inputmethod.latin.LatinIME", stdout=subprocess.DEVNULL, shell=True )
+        sb.run( "adb shell ime set com.google.android.inputmethod.latin/com.android.inputmethod.latin.LatinIME", stdout=sb.DEVNULL, shell=True )
     # Disable keyboard
     elif toggle.lower() == "off":
-        subprocess.run( "adb shell ime set com.wparam.nullkeyboard/.NullKeyboard", stdout=subprocess.DEVNULL, shell=True )
+        sb.run( "adb shell ime set com.wparam.nullkeyboard/.NullKeyboard", stdout=sb.DEVNULL, shell=True )
 
 
 def _set_process_caller( system_type ):
     global vibrate
 
-    def bash_preset( args ):
-        sb.run( f"echo '{args}' > ~/pipes/adbpipe &", shell=True )
+    def bash_preset( args, pipe=True, dev_null = False ):
+        if pipe:
+            sb.run( f"echo '{args}' > ~/pipes/adbpipe", shell=True, stdout=sb.DEVNULL if dev_null else sb.PIPE )
+        else:
+            sb.run( args, shell=True, stdout=sb.DEVNULL if dev_null else sb.PIPE )
 
-    def cmd_preset( args ):
-        sb.run( f"adb shell {args}", shell=True, stdout=sb.DEVNULL )
+    def cmd_preset( args, dev_null = False ):
+        sb.run( f"adb shell {args}", shell=True, stdout=sb.DEVNULL if dev_null else sb.PIPE )
 
     def vb( duration, times ):
         # Disable termux-vibrate shell call for windows

@@ -92,7 +92,7 @@ def get_elements( device: "U2_Device" = None, instance_range: int|tuple = None, 
     captured = {}
 
     for i in range( start, stop ):
-        ui = device.waitElement( selector = { "className" : class_name.value, "instance" : i } )
+        ui = device.waitElement( selector = { "className" : class_name.value, "instance" : i }, timeout = 4 )
 
         if ui in ( "FAILED", None ):
             print( "get_elements .. Element not found" )

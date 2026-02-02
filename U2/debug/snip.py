@@ -25,21 +25,22 @@ def check_dirs( system_type ):
         dev_dump.mkdir( exists_ok = True )
 
 
-def snip_screen( uiBounds:dict = None, name = "snip", overwrite = True ) -> Path:
+def snip_screen( uiBounds:dict = None, name = "snip", unique = False ) -> Path:
     # uiBounds : Element bounds to mark rectangle
-    # If overwrite is False, same filename snips will have incremental name mod
-    # returns image_path
+    # If unique is True, filename with be extended by timestamp
+    # returns Path() of image
     check_dirs( system_type )
-
     coo = uiBounds
-    image_name = name + ".png"
-    image_path = ( dev_dump / image_name ).as_posix()
 
+    name += time.strftime( "_%m_%d_%Y_%I-%M-%S-%p" ) if unique else ""
+    image_name = name + ".png"
+
+    image_path = ( dev_dump / image_name ).as_posix()
     sb.run( f"adb shell screencap { image_path }", shell = True )
 
     if system_type == "Windows":
         # Pull image from device
-        win_image = (win_dump / image_name).as_posix()
+        win_image = ( win_dump / image_name ).as_posix()
         sb.run( f"adb pull { image_path } { win_image }", shell = True )
 
         image_path = win_image

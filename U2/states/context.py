@@ -53,7 +53,7 @@ class Session( U2_Device ):
         # Limit UiObject selection based on specified classNames
         uinfo = uinfo
         if not uinfo["className"] in tfo.class_name_delimiter:
-            infoLog( f"    Element class is difference than expected" )
+            infoLog( f"    Element class is different than expected" )
             # Remove unwanted selector keys
             selector = self.uiObject.selector
 
@@ -64,7 +64,7 @@ class Session( U2_Device ):
                 uinfo = self.search_element( selector | {"className" : class_name} )
 
                 if uinfo is not None:
-                    print("delimiter class found")
+                    infoLog("    Delimiter class found")
                     break
         return uinfo
         
@@ -78,7 +78,7 @@ class Session( U2_Device ):
 
     def clickNoUi( self, coo:tuple[int,int] ):
         x,y = coo
-        #infoLog( f"Clicking ({x}, {y})" )
+        infoLog( f"Clicking ({x}, {y})" )
         adbClickNoUi( coo )
 
 

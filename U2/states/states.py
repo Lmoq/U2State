@@ -70,7 +70,6 @@ class Check( Task_State ):
             infoLog( f"Check error" )
             return self
 
-        infoLog( f"Check selector found" )
         return self.next_state
 
 

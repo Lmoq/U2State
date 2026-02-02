@@ -12,11 +12,10 @@ class Task_State():
 
 
     def enter( self, ctx ):
-        infoLog( f"Entering <<{self}>>" )
+        pass
 
 
     def run( self, ctx ):
-        infoLog( f"Executing <<{self}>>" )
         pass
 
 
@@ -29,7 +28,7 @@ class Task_State():
 
 
     def exit( self, ctx ):
-        infoLog( f"Exiting <<{self.desc}>>" )
+        pass
 
 
     def __repr__( self ):

@@ -89,6 +89,7 @@ class TimeTracker( Time ):
 
 
     def __init__( self, min_interval = 0 ):
+        super().__init__()
         # Buffer list for calculation of time intervals
         self.interval_buffer = []
 
@@ -103,8 +104,11 @@ class TimeTracker( Time ):
         self.average = Time()
 
 
-    def track_interval( self ):
+    def track_interval( self, delete_buffer_pos:int = 0 ):
         # Used for tracking short interval of one or more series of process
+        # Delete buffer position changes how tracker behaves
+        # Value [0] deletes older time changing the reference point to new one
+        # Value [1] deletes newer time preserving the first tracked time, used for tracking longer duration
         buffer = self.interval_buffer
         buffer.append( time.time() )
 
@@ -125,13 +129,14 @@ class TimeTracker( Time ):
                 self.average.set_seconds( avg )
 
             self.set_seconds( interval )
-            del buffer[0]
+            del buffer[ delete_buffer_pos ]
 
 
     def get_total_avg( self ) -> int:
         # Calculate total average and keeps the record or list piled up until reset
         if self.track_calls:
-            self.average.set_seconds( self.sum_of_intervals // self.track_calls )
+            return self.sum_of_intervals // self.track_calls 
+        return 0
 
 
     def get_avg_of_n( self, aoN, cap: bool = True ) -> int:
@@ -142,7 +147,8 @@ class TimeTracker( Time ):
             avg = sum( self.interval_list[-aoN:] ) // aoN
             if cap: 
                 del self.interval_list[0]
-            self.average.set_seconds( avg )
+            return avg
+        return 0
 
 
     def reset( self ):

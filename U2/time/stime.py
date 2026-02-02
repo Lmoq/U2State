@@ -32,7 +32,8 @@ class Stime:
 
     # init : str = "<Abreviated dayname> <24hour>:<minutes>:<seconds>"
     def __init__( self, init_data: str | int = None, default = True ):
-        #self.str = timenow() if (default and not time_str) else time_str
+        init_data = timenow() if (default and not init_data) else init_data
+
         self.str = ""
         self.seconds = 0
 
