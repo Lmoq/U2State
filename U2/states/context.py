@@ -14,9 +14,11 @@ class Session( U2_Device ):
 
         self.restricted = False
         self.start_time_restriction: str = None
-        self.end_time_restriction:str = None
+        self.end_time_restriction: str = None
 
         self.write_text: str = ""
+        self.end_state = None
+
         super().__init__( device, package_name )
 
 

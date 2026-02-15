@@ -1,5 +1,5 @@
 from U2.states import Session
-from U2.time import TimeTracker
+from U2.time import TimeTracker, Stime
 from U2.process import system_type
 
 from U2.adb_tools import adbClick, exec_
@@ -20,6 +20,8 @@ class MSBot( Session ):
         self.task_timer = TimeTracker()
 
         self.cycle_timer = TimeTracker( min_interval = 0 )
+        self.cycle_timer.avg_of_n = 5
+
         self.expected_time_avg = 0
 
         self.points_limit = 0
@@ -35,7 +37,7 @@ class MSBot( Session ):
 
 
     def pointsReachedLimit( self ):
-        if self.points > self.points_limit:
+        if self.points_limit and self.points > self.points_limit:
             return True
         return False
 
@@ -54,6 +56,15 @@ class MSBot( Session ):
                 msg_tabs.append( v )
 
         return msg_tabs[ instance - 1 ] if msg_tabs else None
+
+
+    def timeRestricted( self ):
+        # Checks if runs at valid time
+        if ( not self.start_time_restriction or not self.end_time_restriction ):
+            return False
+        stime = Stime()
+
+        return stime.in_range( self.start_time_restriction, self.end_time_restriction )
 
 
     def restartTarget( self, tab_instance_number:int = 0 ):

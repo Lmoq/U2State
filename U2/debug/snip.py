@@ -22,7 +22,7 @@ def check_dirs( system_type ):
             sb.run( f"adb shell mkdir { dev_dump.as_posix() }", shell = True )
 
     elif system_type == "Linux":
-        dev_dump.mkdir( exists_ok = True )
+        dev_dump.mkdir( exist_ok = True )
 
 
 def snip_screen( uiBounds:dict = None, name = "snip", unique = False ) -> Path:
@@ -34,6 +34,10 @@ def snip_screen( uiBounds:dict = None, name = "snip", unique = False ) -> Path:
 
     name += time.strftime( "_%m_%d_%Y_%I-%M-%S-%p" ) if unique else ""
     image_name = name + ".png"
+
+    # Revise string for file name
+    replaced_spaces = image_name.replace( ' ','_' )
+    image_name = re.sub( r'[^a-zA-Z0-9_\-\[\].]', '' , replaced_spaces )
 
     image_path = ( dev_dump / image_name ).as_posix()
     sb.run( f"adb shell screencap { image_path }", shell = True )

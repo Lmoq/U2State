@@ -31,8 +31,10 @@ class Task_State():
         pass
 
 
-    def __repr__( self ):
+    def __str__( self ):
         return self.desc or str( type( self ) )
+
+
 
 
 

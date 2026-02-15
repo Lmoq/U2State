@@ -125,7 +125,7 @@ class TimeTracker( Time ):
                 self.sum_of_intervals += interval
                 self.interval_list.append( interval )
 
-                avg = self.get_avg_of_n( self.avg_of_n ) or self.get_total_avg()
+                avg = self.get_avg_of_n( self.avg_of_n ) if self.avg_of_n else self.get_total_avg()
                 self.average.set_seconds( avg )
 
             self.set_seconds( interval )

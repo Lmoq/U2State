@@ -9,6 +9,8 @@ class Handler:
     multi_bot = False
 
     def __init__( self, context: Session = None ):
+        assert context is not None, "Required setting context inside init method first"
+
         self.ctx = context
         # This will be toggled off when multi_bot flag is True
         self.active = True
@@ -33,6 +35,8 @@ class Handler:
     def set_state( self, start: Task_State, end: Task_State ):
         self.current_state = start
         self.end_state = end
+
+        self.ctx.end_state = end
 
 
     def switch_state( self, next_state: Task_State ):
