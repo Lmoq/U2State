@@ -1,3 +1,4 @@
 *.egg-info
 *__
+Multibot/data/*.json
 
