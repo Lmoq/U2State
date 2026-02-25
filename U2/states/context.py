@@ -9,6 +9,8 @@ class Session( U2_Device ):
 
 
     def __init__( self, device: "uiautomator2.Device" = None, package_name = None ):
+        self.active  = True
+
         self.uinfo: dict = None
         self.uiObject: "uiautomator2._selector.UiObject" = None
 

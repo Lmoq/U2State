@@ -106,9 +106,9 @@ def _set_process_caller( system_type ):
         if pipe:
             sb.run( f"echo '{args}' > ~/pipes/adbpipe", shell=True, stdout=sb.DEVNULL if dev_null else sb.PIPE )
         else:
-            sb.run( args, shell=True, stdout=sb.DEVNULL if dev_null else sb.PIPE )
+            sb.run( f"adb shell '{args}'", shell=True, stdout=sb.DEVNULL if dev_null else sb.PIPE )
 
-    def cmd_preset( args, dev_null = False ):
+    def cmd_preset( args, pipe = False, dev_null = False ):
         sb.run( f"adb shell {args}", shell=True, stdout=sb.DEVNULL if dev_null else sb.PIPE )
 
     def vb( duration, times ):

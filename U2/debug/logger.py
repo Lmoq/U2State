@@ -18,13 +18,20 @@ class Logger:
 
     info_stdout = False
     debug_stdout = False
+    _init = False
 
 
     """To change default path, set_path() must be called first before this"""
     @classmethod
     def init( cls ):
+        if cls._init:
+            # Prevent multiple initialization calls
+            print( f"Logger has been already initalized" )
+            return
+
         cls.create_log_dir()
         cls.init_loggers()
+        cls._init = True
 
 
     """Disables any logging levels eg. [ logging.WARNING, ]"""

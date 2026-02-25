@@ -32,8 +32,8 @@ def snip_screen( uiBounds:dict = None, name = "snip", unique = False ) -> Path:
     check_dirs( system_type )
     coo = uiBounds
 
-    name += time.strftime( "_%m_%d_%Y_%I-%M-%S-%p" ) if unique else ""
-    image_name = name + ".png"
+    prefix = time.strftime( "_%m_%d_%Y_%I-%M-%S-%p" ) if unique else ""
+    image_name = prefix + name + ".png"
 
     # Revise string for file name
     replaced_spaces = image_name.replace( ' ','_' )

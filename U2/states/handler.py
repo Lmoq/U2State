@@ -1,6 +1,7 @@
 from U2.states.context import Session
 from U2.states.state import Task_State
 from U2.debug import debugLog, infoLog, printLog
+from U2.time import Stime
 
 
 class Handler:
@@ -57,7 +58,7 @@ class Handler:
         assert self.current_state != None, "State Handler current state should be set first"
 
         self.current_state.enter( self.ctx )
-        while self.active:
+        while self.ctx.active:
             try:
                 next_state = self.current_state.run( self.ctx )
 
@@ -69,6 +70,7 @@ class Handler:
             except KeyboardInterrupt:
                 type( self ).sig_term = True
                 break
-        printLog( "<<Exiting state loop>>" )
+
+        printLog( f"<<Exiting state loop>> {Stime()}" )
         self.current_state.exit( self.ctx )
         

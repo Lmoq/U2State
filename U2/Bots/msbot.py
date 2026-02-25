@@ -1,9 +1,10 @@
-from U2.states import Session
+from U2.states import Session, Check, Handler, Task_State
 from U2.time import TimeTracker, Stime
-from U2.process import system_type
 
+from U2.process import system_type
 from U2.adb_tools import adbClick, exec_
-from U2.debug import get_elements
+
+from U2.debug import get_elements, infoLog, debugLog, printLog
 from U2.enums import Wtype
 
 import time
@@ -74,19 +75,11 @@ class MSBot( Session ):
         stop_cm = f"am force-stop {self.target_package}"
         start_cm = f"am start -n {self.launch_activity}"
 
-        if system_type == "Windows":
-            exec_( stop_cm )
-            time.sleep( 0.3 )
-            exec_( start_cm )
+        linux_pipe = False if system_type == "Linux" else None
 
-            print( f"Restarting with Windows" )
-
-        elif system_type == "Linux":
-            exec_( f"adb shell { stop_cm }", pipe = False )
-            time.sleep( 0.3 )
-            exec_( f"adb shell { start_cm }", pipe = False )
-
-            print( f"Restarting with Linux" )
+        exec_( stop_cm, pipe = linux_pipe )
+        time.sleep( 0.3 )
+        exec_( start_cm, pipe = linux_pipe )
 
         self.device.wait_activity( self.launch_activity.split('/')[1] )
         elements = get_elements( self, 10 , Wtype.button, capture_output = True )
@@ -94,3 +87,49 @@ class MSBot( Session ):
         bounds = self.get_msg_tab( tab_instance_number, elements )
         adbClick( bounds )
 
+
+    def get_current_state_wait_time( self, state: Task_State = None  ) -> int:
+        raise NotImplementedError
+
+
+
+
+class MSCheck( Check ):
+
+
+    def __init__( self, **kwargs ):
+        super().__init__( **kwargs )
+
+
+    def run( self, ctx ):
+        tfo = self.current_state.task_info
+        ui = ctx.waitElement( tfo.check_selector, tfo.check_selector_timeout )
+
+        if ui is None:
+            infoLog( f"    <<Check selector>> not found reverting to <<{self.current_state}>>" )
+            snip_screen( name = self.desc, unique = True )
+            return self.current_state
+
+        elif ui == "FAILED":
+            infoLog( f"Check error" )
+            return self
+
+        # Additional calls in middle of run()
+        self.callback( ctx )
+
+        if self.current_state == ctx.end_state:
+
+            if ctx.cycle_timer.average > ctx.expected_time_avg:
+                log = f"ET exceeded:{ ctx.cycle_timer } ET:{ctx.expected_time_avg} trackcalls:{ctx.cycle_timer.track_calls}"
+
+                infoLog( log )
+                debugLog( log )
+
+                ctx.restartTarget( ctx.tab_instance_number )
+                ctx.cycle_timer.reset()
+
+            if Handler.multi_bot:
+                ctx.active = False
+
+        infoLog( f"Check selector found" )
+        return self.next_state
