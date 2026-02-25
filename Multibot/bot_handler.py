@@ -7,6 +7,7 @@ class Bot_Handler:
         self.bot = bot_handler
         self.name = ""
         self.key_name = ""
+        self.next_time_wait: int = 0
 
     def __repr__( self ):
         return self.name

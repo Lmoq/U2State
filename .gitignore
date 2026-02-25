@@ -1,4 +1,6 @@
 *.egg-info
 *__
-Multibot/data/*.json
-
+**/data/*.json
+**/commit.txt
+**/todo.txt
+**/logs
