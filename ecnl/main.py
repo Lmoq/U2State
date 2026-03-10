@@ -8,7 +8,7 @@ from U2.adb_tools import switch_keyboard
 try:
     from .states import states_list
     from .context import CTX
-except Exception as e:
+except:
     from states import states_list
     from context import CTX
     
@@ -33,9 +33,9 @@ Bot.set_state( states_list[0], states_list[-1] )
 def main():
     import uiautomator2 as u2
 
+    Logger.init()
     if system_type == "Windows":
         import logging
-        Logger.init()
         Logger.disable_levels( [logging.INFO] )
 
     start_adb_shell_pipes( system_type )

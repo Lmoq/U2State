@@ -3,23 +3,17 @@ from U2.states import Click, Wait, Write, Swipe, Check
 from U2.task import Task_Info
 
 from U2.debug import printLog, infoLog, debugLog, snip_screen
-from U2.adb_tools import adbSwipeUi
+from U2.adb_tools import adbSwipeUi, vibrate
+from U2.notif import NotifLog
 
 from U2.enums import Wtype, Direction
 from U2.time import Stime, timenow
 
 try:
-    from .alg import get_answer_regex
+    from .alg import get_answer_regex, get_points
 except:
-    from alg import get_answer_regex
+    from alg import get_answer_regex, get_points
 
-
-screen = {
-    'top' : 0,
-    'left' : 0,
-    'bottom' : 1612,
-    'right' : 720
-}
 
 class Question( Wait ):
 
@@ -37,8 +31,10 @@ class Question( Wait ):
             ctx.restartTarget( ctx.tab_instance_number )
 
             ctx.restart_timer.reset()
-            printLog( f"Scheduled restart {Stime()}" )
+            # printLog( f"Scheduled restart {Stime()}" )
 
+
+        # Main selector search
         uinfo = ctx.search_sibling_element( tfo.emoji_button, tfo.match_selector, tfo.match_selector_timeout )
         if uinfo is None:
             infoLog( f"    <<Question not found>>" )
@@ -53,12 +49,13 @@ class Question( Wait ):
                 in_target_app = ctx.device.wait_activity( ctx.launch_activity.split('/')[1], timeout=1 )
 
                 if in_target_app:
-                    adbSwipeUi( screen, Direction.up, 500 )
+                    adbSwipeUi( ctx.screen_dimension, Direction.up, 500 )
 
             ctx.failed_cycle = True
             return self
 
         ctx.cycle_timer.track_interval()
+
 
         if not ctx.failed_cycle and ctx.cycle_timer.track_calls > 0 and ctx.cycle_timer < 25:
             # Handle sudden reappearance of target ui to prevent spam
@@ -73,6 +70,7 @@ class Question( Wait ):
             ctx.cycle_timer.reset()
 
             ctx.debug_snip = True
+            printLog( f"Toggled snip : {ctx.debug_snip} {Stime()}" )
             return self
 
         ctx.uinfo = uinfo
@@ -80,6 +78,39 @@ class Question( Wait ):
 
         infoLog( f"Question : {ctx.uinfo['text']}" )
         answered = self.callback( ctx )
+
+
+        # Check if local db is synced with latest info
+        p_uinfo = ctx.search_element( {"textContains" : f"Bot Income:"}, tfo.ps_timeout )
+        if p_uinfo is None:
+            log = f"    <<Pinfo not found>> {Stime()}"
+
+            printLog( log )
+            infoLog( log )
+
+            vibrate( 2, 1 )
+        else:
+            text = get_points( p_uinfo["text"] )
+
+            log = f"Local : {ctx.points} Pinfo : {text}"
+            infoLog( log )
+
+            NotifLog.db_points = ctx.points
+            NotifLog.live_points = text
+
+            if int( text ) != ctx.points:
+                vibrate( 2, 1 )
+
+                recent = Stime()
+                NotifLog.recent_desync = recent
+
+                log = f"Db[{ctx.points}] P[{text}] {recent}"
+
+                printLog( log )
+                infoLog( log )
+                debugLog( log )
+
+                ctx.points = int( text )
 
         return self.next( ctx ) if answered else self
 
@@ -154,8 +185,12 @@ class ECCheck( MSCheck ):
 
 
     def callback( self, ctx ):
+        # Increment points
+        ctx.points += 1
+
         # Temporary snip debugging
         if ctx.debug_snip:
+            printLog( f"Follow up snip : {ctx.debug_snip} {Stime()}" )
 
             if self.desc == "Check task for Write Text":
                 snip_screen( name = "write_sudden", unique = True )
@@ -163,6 +198,7 @@ class ECCheck( MSCheck ):
             if self.desc == "Check task for Click Send Button":
                 snip_screen( name = "send_sudden", unique = True )
                 ctx.debug_snip = False
+                printLog( f"Toggled off {ctx.debug_snip} {Stime()}" )
 
 
 states_list = [
@@ -170,6 +206,9 @@ states_list = [
         task_info = Task_Info(
             match_selector = { 'textContains' : '\nIdentify the color of' },
             emoji_button = { 'description' : 'Add custom reaction', 'className' : Wtype.button.value },
+
+            points_selector = { "textContains" : "Correct Answer" },
+            ps_timeout = 20,
             match_selector_timeout = 35
         ),
         desc = "Wait Question"
@@ -177,7 +216,7 @@ states_list = [
     Click( task_info = Task_Info
         (
         match_selector = { "textContains" : "essage" },
-        match_alt_selector = { "className" : Wtype.editText.vale },
+        match_alt_selector = { "className" : Wtype.editText.value },
 
         match_selector_timeout = 1,
         class_name_delimiter = [ Wtype.editText.value, Wtype.button.value ],

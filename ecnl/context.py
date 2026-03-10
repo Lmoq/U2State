@@ -16,6 +16,6 @@ class CTX( MSBot ):
     def get_current_state_wait_time( self, state: Task_State = None ) -> int:
         match state:
             case Question():
-                print("type:Question")
+                #print("type:Question")
                 return 33
         
