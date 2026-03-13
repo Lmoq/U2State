@@ -1,11 +1,11 @@
+import cv2 as cv
+import subprocess as sb, re
+from pathlib import Path
+
 from U2.enums import Wtype, get_wtype_enum
 from U2.debug import Logger, printLog
 from U2.process import system_type
 from .snip import dev_dump, win_dump, check_dirs, snip_screen
-
-from pathlib import Path
-import subprocess as sb, re
-import cv2 as cv
 
 
 
@@ -62,19 +62,7 @@ def get_element( device: "U2_Device" = None, selector: dict = None, show_bounds 
                 replaced_spaces = text.replace( ' ','_' )
                 refined_text = re.sub( r'[^a-zA-Z0-9_\-\[\]]', '' , replaced_spaces )
 
-                image_path = snip_screen( name = refined_text )
-                cv_image = cv.imread( image_path, cv.IMREAD_COLOR )
-
-                lt = coo['left'], coo['top']
-                rb = coo['right'], coo['bottom']
-
-                cv.rectangle( 
-                    cv_image, lt, rb,
-                    color = ( 0,255,0 ),
-                    thickness = 2,
-                    lineType = cv.LINE_4
-                )
-                cv.imwrite( image_path, cv_image )
+                image_path = snip_screen( coo, name = refined_text )
         else:
             print( f"Ui bounds not retrieved.. will not proceed get_center or snip" )
 
@@ -83,7 +71,7 @@ def get_element( device: "U2_Device" = None, selector: dict = None, show_bounds 
 
         
 def get_elements( device: "U2_Device" = None, instance_range: int|tuple = None, class_name: Wtype = None, show_bounds = False, 
-                  show_info = False, snip = False, get_center = False, capture_output = False, print_result = False
+                  show_info = False, snip = False, get_center = False, capture_output = False, print_result = False, timeout = 0
     ) -> dict:
     range_ = instance_range
     start, stop = ( 0, range_ ) if type( range_ ) is int else range_
@@ -92,7 +80,7 @@ def get_elements( device: "U2_Device" = None, instance_range: int|tuple = None, 
     captured = {}
 
     for i in range( start, stop ):
-        ui = device.waitElement( selector = { "className" : class_name.value, "instance" : i }, timeout = 4 )
+        ui = device.waitElement( selector = { "className" : class_name.value, "instance" : i }, timeout = timeout )
 
         if ui in ( "FAILED", None ):
             print( "get_elements .. Element not found" )
@@ -144,10 +132,9 @@ def get_elements( device: "U2_Device" = None, instance_range: int|tuple = None, 
 
     if found_elements:
         check_dirs( system_type )
-        image_name = "snip"
 
-        image_path = snip_screen( name = image_name )
-        image = cv.imread( image_path, cv.IMREAD_COLOR )
+        image_name = "snip"
+        image_path, image = snip_screen( name = image_name, write = False, image_data = True )
 
         for file_name, bounds in found_elements.items():
             # Reuse single screenshot for all elements

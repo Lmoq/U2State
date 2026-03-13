@@ -11,6 +11,8 @@ class U2_Device:
     _target_package = ""
     _launch_activity = ""
 
+    screen_dimension = {}
+
 
     @classmethod
     def init_device_session( cls, device = None, package_name = None ):
@@ -22,6 +24,7 @@ class U2_Device:
         
         cls._target_package = package
         cls._launch_activity = cls.get_launch_activity( package )
+        cls.get_screen_dimension( device )
 
 
     @staticmethod
@@ -37,10 +40,23 @@ class U2_Device:
 
             if type(self)._device is not None:
                 printLog(f"Notice: {type(self)} already has class attribute of device.. proceeding to set instance level attr")
-            self._instance_device = device
 
+            self._instance_device = device
             self._instance_target_package = package_name or device.info["currentPackageName"]
             self._instance_launch_activity = self.get_launch_activity( self._instance_target_package )
+
+            type(self).get_screen_dimension( device )
+
+
+    @classmethod
+    def get_screen_dimension( cls, device ):
+        info = device.info
+        cls.screen_dimension = {
+            "top" : 0,
+            "left" : 0,
+            "bottom" : info['displayHeight'],
+            "right" : info['displayWidth']
+        }
 
 
     @property
@@ -127,7 +143,6 @@ class U2_Device:
                 info = ui.info       
             except Exception:
                 retries += 1
-                time.sleep( 0.5 )
 
             #if retries > NotifLog.gInfo:
             #    NotifLog.gInfo = retries

@@ -119,7 +119,7 @@ class TimeTracker( Time ):
             # while using a minimum threshold to filter out faulty ones
             threshold = self.min_interval
 
-            if interval > threshold:
+            if interval >= threshold:
                 self.track_calls += 1
 
                 self.sum_of_intervals += interval

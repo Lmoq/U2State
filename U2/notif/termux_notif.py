@@ -7,7 +7,6 @@ def termux_notif( follow_default=True, _id=21, **kwargs ):
         dict_ = {
             "--id"      : _id,
             "--title"   : "Notification",
-            "--priority" : "medium",
         }
         dict_.update(kwargs)
         k_args = dict_
@@ -38,6 +37,7 @@ def notif( pin=True, fd=True, include_exit_button = True, _id=21, **d ):
         "b2_action" : "--button2-action",
         "b3_action" : "--button3-action",
         "img" : "--image-path",
+        "prio" : "--priority", # medium
     }
 
     # Replaces the simplified keys from arguments with the 

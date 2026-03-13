@@ -44,6 +44,7 @@ class Task_State_U2( Task_State ):
 
         check.current_state = self
         check.next_state = self.next_state
+        check.root_state = self.root_state
 
         return check
 
@@ -56,6 +57,7 @@ class Check( Task_State ):
 
         self.current_state: Task_State = None
         self.next_state: Task_State = None
+        self.root_state = None
 
 
     def run( self, ctx ) -> Task_State:
@@ -64,7 +66,7 @@ class Check( Task_State ):
         
         if ui is None:
             infoLog( f"    <<Check selector>> not found reverting to <<{self.current_state}>>" )
-            return self.current_state
+            return self.root_state or self.current_state
 
         elif ui == "FAILED":
             infoLog( f"Check error" )

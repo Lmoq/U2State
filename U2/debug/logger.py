@@ -80,7 +80,7 @@ class Logger:
         logger.propagate = propagate
 
         # Setup FileHandler
-        file_handler = logging.FileHandler( cls.debug_path / file_name )
+        file_handler = logging.FileHandler( filename = cls.debug_path / file_name, encoding = "utf-8" )
         file_handler.setLevel( level )
         file_handler.propagate = propagate
 

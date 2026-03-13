@@ -80,7 +80,8 @@ def adbKeyPress( key = None ):
     exec_( cm )
 
 
-def vib( duration, times ):
+def vib( duration, times = 1 ):
+    # duration is in seconds format, eg. 1, 0.5, 0.3
     duration = int( duration * 1000 )
     cm = []
     for i in range( times ): 

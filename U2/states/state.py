@@ -5,10 +5,12 @@ from U2.debug import printLog, infoLog, debugLog
 class Task_State():
 
 
-    def __init__( self, task_info: Task_Info = None, desc = None, next_state: "Task_State" = None ):
+    def __init__( self, task_info: Task_Info = None, desc = None, next_state: "Task_State" = None, root_state: "Task_State" = None ):
         self.task_info = task_info
         self.desc = desc
+
         self.next_state = next_state
+        self.root_state = root_state
 
 
     def enter( self, ctx ):
