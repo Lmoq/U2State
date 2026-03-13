@@ -1,3 +1,4 @@
+import cv2 as cv, time
 from U2.Bots.msbot import MSCheck
 from U2.states import Click, Wait, Write, Swipe, Check
 from U2.task import Task_Info
@@ -39,8 +40,8 @@ class Question( Wait ):
         if uinfo is None:
             infoLog( f"    <<Question not found>>" )
 
-            printLog( f"Retries : { ctx.retries }" )
             ctx.retries += 1
+            printLog( f"Retries : { ctx.retries }" )
 
             if ctx.retries > 1:
                 ctx.restartTarget( ctx.tab_instance_number )
@@ -56,7 +57,6 @@ class Question( Wait ):
 
         ctx.cycle_timer.track_interval()
 
-
         if not ctx.failed_cycle and ctx.cycle_timer.track_calls > 0 and ctx.cycle_timer < 25:
             # Handle sudden reappearance of target ui to prevent spam
             snip_screen( name = "sudden", unique = True )
@@ -66,16 +66,19 @@ class Question( Wait ):
             debugLog( log )
             printLog( log )
 
+            # Save previous check image data
+            if ctx.snip_send and ctx.snip_data is not None:
+                dst, image = ctx.snip_data
+                cv.imwrite( dst, image )
+                print( f"Saved previous buffer to : {dst}" )
+
             ctx.restartTarget( ctx.tab_instance_number )
             ctx.cycle_timer.reset()
 
             ctx.debug_snip = True
-            printLog( f"Toggled snip : {ctx.debug_snip} {Stime()}" )
             return self
 
         ctx.uinfo = uinfo
-        ctx.retries = 0
-
         infoLog( f"Question : {ctx.uinfo['text']}" )
         answered = self.callback( ctx )
 
@@ -88,29 +91,25 @@ class Question( Wait ):
             printLog( log )
             infoLog( log )
 
+            snip_screen( name = "pinfo", unique = True )
             vibrate( 2, 1 )
         else:
-            text = get_points( p_uinfo["text"] )
+            prev_points = int( get_points( p_uinfo["text"] ) )
 
-            log = f"Local : {ctx.points} Pinfo : {text}"
+            log = f"Local : {ctx.points} Pinfo : {prev_points}"
             infoLog( log )
 
-            NotifLog.db_points = ctx.points
-            NotifLog.live_points = text
-
-            if int( text ) != ctx.points:
-                vibrate( 2, 1 )
+            if prev_points != ctx.points:
+                vibrate( 0.5, 2 )
 
                 recent = Stime()
-                NotifLog.recent_desync = recent
-
-                log = f"Db[{ctx.points}] P[{text}] {recent}"
+                log = f"Db[{ctx.points}] P[{prev_points}] {recent}"
 
                 printLog( log )
                 infoLog( log )
                 debugLog( log )
 
-                ctx.points = int( text )
+                ctx.points = prev_points
 
         return self.next( ctx ) if answered else self
 
@@ -126,8 +125,26 @@ class Question( Wait ):
 
         ctx.write_text = answer
         ctx.failed_cycle = False
+        ctx.retries = 0
 
         return True
+
+
+class ClickEdit( Click ):
+
+
+    def __init__( self, **kwargs ):
+        super().__init__( **kwargs )
+
+
+    def next( self, ctx ):
+        check = ECCheck( desc = f"Check task for {self}" )
+
+        check.current_state = self
+        check.next_state = self.next_state
+        check.root_state = self.root_state
+
+        return check
 
 
 class Write( Write ):
@@ -146,10 +163,11 @@ class Write( Write ):
 
 
     def next( self, ctx ):
-        check = MSCheck( desc = f"Check task for {self}" )
+        check = ECCheck( desc = f"Check task for {self}" )
 
         check.current_state = self
         check.next_state = self.next_state
+        check.root_state = self.root_state
 
         return check
 
@@ -174,6 +192,7 @@ class ClickSend( Click ):
 
         check.current_state = self
         check.next_state = self.next_state
+        check.root_state = self.root_state
 
         return check
 
@@ -185,12 +204,9 @@ class ECCheck( MSCheck ):
 
 
     def callback( self, ctx ):
-        # Increment points
-        ctx.points += 1
-
         # Temporary snip debugging
         if ctx.debug_snip:
-            printLog( f"Follow up snip : {ctx.debug_snip} {Stime()}" )
+            printLog( f"Follow up snip : {ctx.debug_snip} desc : {self.desc} {Stime()}" )
 
             if self.desc == "Check task for Write Text":
                 snip_screen( name = "write_sudden", unique = True )
@@ -198,7 +214,18 @@ class ECCheck( MSCheck ):
             if self.desc == "Check task for Click Send Button":
                 snip_screen( name = "send_sudden", unique = True )
                 ctx.debug_snip = False
-                printLog( f"Toggled off {ctx.debug_snip} {Stime()}" )
+
+        if ctx.snip_send and self.desc == "Check task for Click Send Button":
+            uinfo = ctx.getInfo( ctx.uiObject )
+
+            ctx.snip_data = snip_screen( 
+                uinfo['bounds'], 
+                name = "snip_proof", 
+                
+                unique = True, 
+                write = False, 
+                image_data = True 
+            )
 
 
 states_list = [
@@ -206,14 +233,14 @@ states_list = [
         task_info = Task_Info(
             match_selector = { 'textContains' : '\nIdentify the color of' },
             emoji_button = { 'description' : 'Add custom reaction', 'className' : Wtype.button.value },
+            match_selector_timeout = 35,
 
-            points_selector = { "textContains" : "Correct Answer" },
-            ps_timeout = 20,
-            match_selector_timeout = 35
+            points_selector = { "textContains" : "Bot Income" },
+            ps_timeout = 15,
         ),
         desc = "Wait Question"
     ),
-    Click( task_info = Task_Info
+    ClickEdit( task_info = Task_Info
         (
         match_selector = { "textContains" : "essage" },
         match_alt_selector = { "className" : Wtype.editText.value },
@@ -233,3 +260,7 @@ states_list = [
         desc = "Click Send Button"
     )
 ]
+
+# Manual redirection of checkpoint states
+states_list[3].root_state = states_list[1]
+states_list[2].root_state = states_list[1]

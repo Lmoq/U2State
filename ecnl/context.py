@@ -11,6 +11,10 @@ class CTX( MSBot ):
 
     def __init__( self, **kwargs ):
         super().__init__( **kwargs )
+        self.retries = 0
+        self.failed_cycle = False
+        self.debug_snip = False
+        self.snip_send = False
 
     
     def get_current_state_wait_time( self, state: Task_State = None ) -> int:

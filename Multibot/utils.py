@@ -2,6 +2,9 @@ from U2.base import U2_Device
 from U2.adb_tools import exec_
 from U2.process import system_type
 
+from U2.notif import NotifLog
+from U2.notif.shell_notif import _exec
+
 
 rs_main = """
     #!/bin/bash
@@ -48,5 +51,22 @@ def switchFocus( ctx: U2_Device = None, press_back = True ):
 
         bounds = self.get_msg_tab( ctx.tab_instance_number, elements )
         adbClick( bounds )
+
+
+def updateShellNotif( bot_list ):
+    # Display info of running bots into shell notification
+    logs = []
+    for bot_handler in bot_list:
+        # timestr = Estimate Target Wait Time, time.strftime( time.localtime( bot.next_time_wait ) )
+        ctx = bot_handler.bot.ctx
+        log = f"{bot_handler} • {ctx.cycle_timer} • { ctx.cycle_timer.average } • {ctx.points}"
+        logs.append( log )
+
+    NotifLog.lines = logs
+    NotifLog.post_notif( update_title = True )
+
+
+
+    
 
 

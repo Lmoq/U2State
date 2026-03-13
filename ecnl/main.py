@@ -14,16 +14,17 @@ except:
     
 ctx = CTX()
 
-# New class instance memebers
-# ==========================
-ctx.tab_instance_number = 1
 ctx.retries = 0
-ctx.failed_cycle = False
-ctx.debug_snip = False
-# ==========================
+ctx.tab_instance_number = 1
+ctx.points_increment = 1
 
+ctx.cycle_timer.avg_of_n = 0
 ctx.restart_time = 1800
 ctx.expected_time_avg = 33
+
+ctx.failed_cycle = False
+ctx.debug_snip = False
+ctx.snip_send = True
 
 Bot = Handler( context = ctx )
 

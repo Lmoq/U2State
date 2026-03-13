@@ -10,15 +10,16 @@ from U2.time import Stime
 from U2.Bots.msbot import MSBot
 from U2.states import Handler
 
-from U2.debug import Logger
+from U2.debug import Logger, infoLog
 from U2.process import system_type, start_adb_shell_pipes
 from U2.adb_tools import switch_keyboard
 
 from U2.notif import notif, NotifLog
 
 from bot_handler import Bot_Handler
-from config import DataJson, BotList, BotDis, extractJsonData, loadJson, saveJson
-from utils import switchFocus, rs_main, toggle_keyboard
+from config import extractJsonData, loadJson, saveJson
+import config
+from utils import rs_main, toggle_keyboard, switchFocus, updateShellNotif
 
 from ecnl.main import Bot as ECNL
 from ecnl.states import Question
@@ -53,23 +54,25 @@ def exec():
 
     # Load config from data base
     savePath = "./data/data.json"
-    loadJson( tmp, DataJson, path = savePath )
+    loadJson( tmp, config.DataJson, path = savePath )
 
     # Filter restricted bots
     for bot in tmp:
+
         # Allow bots to have change to lift restrictions
         bot.bot.ctx.restricted = bot.bot.ctx.timeRestricted() or bot.bot.ctx.pointsReachedLimit()
         
         if bot.bot.ctx.restricted:
             # Append to discarded list
-            BotDis.append( bot )
+            config.BotDis.append( bot )
             continue
 
         # Add to botlist if not time restricted
-        BotList.append( bot )
+        config.BotList.append( bot )
 
     Bot: Bot_Handler = None
-    if BotList: Bot = BotList[0]
+
+    if config.BotList: Bot = config.BotList[0]
     del tmp
 
     # Initialize class level device, toggle multi_bot flag for all Handlers
@@ -79,10 +82,12 @@ def exec():
     if system_type == "Windows":
         Logger.disable_levels( [logging.INFO] )
 
-    while BotList and not Handler.sig_term:
+    infoLog( "Session Start" )
+
+    while config.BotList and not Handler.sig_term:
         try:
             # Update shell notification
-            NotifLog("")
+            updateShellNotif( config.BotList )
 
             Bot.bot.ctx.active = True
             Bot.bot.state_loop()
@@ -94,12 +99,50 @@ def exec():
                 print( "Sigterm..")
                 continue
 
-            # Choose the quickest wait time if all Bot have done task and time wait
-            if all( b.next_time_wait for b in BotList ):
+            # Choose the quickest wait time if all Bots have complete a cycle
+            if all( b.next_time_wait for b in config.BotList ):
+
+                config.BotList = sorted( config.BotList, key=lambda b : b.next_time_wait )
+                next_bot = config.BotList[0]
+
+                ctx = Bot.bot.ctx
+                next_ctx = next_bot.bot.ctx
+
+                # Check if restriction flag flipped from checking time and points limit
+                if next_ctx.restricted:
+
+                    # Move bot from discarded list
+                    config.BotDis.append( config.BotList.pop( 0 ) )
+
+                    if not config.BotList: 
+                        break 
+
+                    next_bot = config.BotList[0]
+
+                restarted = False
+
+                # Check duration of cycles, if it has slowed down restart target app
+                if not ctx.restricted and ctx.intervalExceed():
+
+                    # Restart target with or without clicking tab UI, then disable press_back incase switchFocus will be called
+                    ctx.restartTarget( 
+                        ctx.tab_instance_number, 
+                        include_click = False if Bot != next_bot else True )
+
+                    restarted = True
+                    ctx.cycle_timer.reset()
+                    
+                # Switch focus
+                if Bot != next_bot:
+                    Bot = next_bot
+                    switchFocus( Bot.bot.ctx, press_back = False if restarted else True )
+
                 continue
 
-            for b in BotList:
-                if not b.next_time_wait:
+            for bot in config.BotList:
+                if not bot.next_time_wait:
+                    Bot = bot
+                    switchFocus( Bot.bot.ctx )
                     pass
 
         except KeyboardInterrupt:
@@ -108,8 +151,8 @@ def exec():
             break
 
     # Save attribute changes to data base
-    BotList.extend( BotDis )
-    saveJson( BotList, DataJson, savePath )
+    config.BotList.extend( config.BotDis )
+    saveJson( config.BotList, config.DataJson, savePath )
 
 
 def main():

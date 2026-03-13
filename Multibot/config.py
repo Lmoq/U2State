@@ -28,10 +28,10 @@ def extractJsonData( bot_list, out_json ):
         contents |= base_json
 
         # Replace Stime object as string to save as json key
-        if isinstance ( b.bot.ctx.start_time_restriction, Stime ):
+        if isinstance( b.bot.ctx.start_time_restriction, Stime ):
             b.bot.ctx.start_time_restriction = b.bot.ctx.start_time_restriction.str
 
-        if isinstance ( b.bot.ctx.end_time_restriction, Stime ):
+        if isinstance( b.bot.ctx.end_time_restriction, Stime ):
             b.bot.ctx.end_time_restriction = b.bot.ctx.end_time_restriction.str
 
         # Extract the updated map of BotList to outjson
