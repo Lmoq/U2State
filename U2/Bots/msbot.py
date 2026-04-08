@@ -17,10 +17,13 @@ class MSBot( Session ):
 
     def __init__( self, *args, **kwargs ):
         super().__init__( *args, **kwargs )
+        self.state_index = 0
+        self.state_points_add = None
         self.tab_instance_number = 0
 
         self.restart_timer = TimeTracker()
         self.task_timer = TimeTracker()
+        self.next_time_wait = 0.0
 
         self.cycle_timer = TimeTracker( min_interval = 0 )
         self.cycle_timer.avg_of_n = 5
@@ -28,9 +31,16 @@ class MSBot( Session ):
 
         self.points_limit = 0
         self.points = 0
+
         self.points_increment = 0
         self.restart_time = 1800
 
+        self.points_data = {
+            "initial" : 0,
+            "current" : 0,
+            "start" : 0,
+            "end" : 0
+        }
         self.snip_data: tuple[ Path:"image data" ] = None
 
 
@@ -41,8 +51,14 @@ class MSBot( Session ):
         return False
 
 
-    def pointsReachedLimit( self ):
-        if self.points_limit and self.points > self.points_limit:
+    def pointsReachedLimit( self, log = False ):
+        if self.points_limit and self.points >= self.points_limit:
+
+            if log:
+                log_ = f"[{self}] Points Limit"
+                infoLog( log_ )
+                printLog( log_ )
+
             return True
         return False
 
@@ -93,7 +109,7 @@ class MSBot( Session ):
         if not include_click:
             return
 
-        elements = get_elements( self, 10 , Wtype.button, capture_output = True, timeout = 4 )
+        elements = get_elements( self, 7 , Wtype.button, capture_output = True, timeout = 4 )
 
         if not elements:
             Handler.sig_term = True
@@ -112,6 +128,49 @@ class MSBot( Session ):
         raise NotImplementedError
 
 
+    def setPointsData( self, points ):
+        db = self.points_data
+        points_ = db.get( 'initial', None )
+
+        if not points_:
+            db['initial'] = points
+            db['start'] = time.time()
+        else:
+            db['current'] = points
+            db['end'] = time.time()
+
+
+    def getPointsAvg( self ) -> tuple[ "unit":"value" ]:
+        db = self.points_data
+        
+        if db.get( 'initial', None ) is None:
+            return ( "N/A", "N/A" )
+
+        interval = db['end'] - db['start']
+        points = db['current'] - db['initial']
+
+        if interval >= 86400:
+            div = interval / 86400
+            avg = points / div
+
+            return "D", int(avg)
+
+        elif interval >= 3600:
+            div = interval / 3600
+            avg = points / div
+
+            return "H", int(avg)
+
+        elif interval >= 60:
+            div = interval / 60
+            avg = points / div
+
+            return "M", int(avg)
+
+        return ( "N/A", "N/A" )
+
+
+
 
 class MSCheck( Check ):
 
@@ -125,40 +184,27 @@ class MSCheck( Check ):
         ui = ctx.waitElement( tfo.check_selector, tfo.check_selector_timeout )
 
         if ui is None:
-            infoLog( f"    <<Check selector>> not found reverting to <<{self.current_state}>>" )
+            infoLog( f"[{ctx}]    <<Check selector>> not found reverting to <<{self.current_state}>>" )
             snip_screen( name = self.desc, unique = True )
 
-            # state_type = f""
-            # desc = f""
-            
-            # if self.root_state:
-                # state_type = "Root State"
-
-                # desc = str( self.root_state )
-                # log = f"Reverting to : {state_type} | desc : {desc}"
-
-                # printLog( f"{log}" )
-            # else:
-                # state_type = "Current State"
-                # desc = str( self.current_state )
-
-                # log = f"Reverting to : {state_type} | desc : {desc}"
-                # printLog( f"{log}" )
-
+            # Return to root state if possible
             return self.root_state or self.current_state
 
         elif ui == "FAILED":
             infoLog( f"Check error" )
             return self
 
-        infoLog( f"Check selector found" )
+        infoLog( f"[{ctx}] Check selector found" )
         ctx.uiObject = ui
 
-        # Additional calls in middle of run()
+        # Additional calls in middle of check state run()
         self.callback( ctx )
 
-        if self.current_state == ctx.end_state:
-            ctx.points += ctx.points_increment
+        if self.current_state in ctx.end_states:
+            if self.current_state == ctx.state_points_add:
+                ctx.points += ctx.points_increment
+
+            ctx.restricted = ctx.timeRestricted() or ctx.pointsReachedLimit( log = True )
 
             if Handler.multi_bot:
                 ctx.active = False

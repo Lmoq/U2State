@@ -9,7 +9,9 @@ class Session( U2_Device ):
 
 
     def __init__( self, device: "uiautomator2.Device" = None, package_name = None ):
+        self.name = ""
         self.active  = True
+        self.end_states: list = None
 
         self.uinfo: dict = None
         self.uiObject: "uiautomator2._selector.UiObject" = None
@@ -19,7 +21,7 @@ class Session( U2_Device ):
         self.end_time_restriction: str = None
 
         self.write_text: str = ""
-        self.end_state = None
+        self.click_text: str = ""
 
         super().__init__( device, package_name )
 
@@ -30,7 +32,7 @@ class Session( U2_Device ):
         ui = self.waitElement( selector, timeout )
         
         if ui in ("FAILED", None):
-            infoLog( "    <<Selector failed>>" )
+            infoLog( f"[{self}]    <<Selector failed>>" )
             return None
 
         self.uiObject = ui
@@ -44,7 +46,7 @@ class Session( U2_Device ):
         ui = self.waitSiblingElement( base, sibling, timeout )
         
         if ui in ("FAILED", None):
-            infoLog( "    <<Selector failed>>" )
+            infoLog( f"[{self}]    <<Selector failed>>" )
             return None
 
         self.uiObject = ui
@@ -57,7 +59,7 @@ class Session( U2_Device ):
         # Limit UiObject selection based on specified classNames
         uinfo = uinfo
         if not uinfo["className"] in tfo.class_name_delimiter:
-            infoLog( f"    Element class is different than expected" )
+            infoLog( f"[{self}]    Element class is different than expected" )
             # Remove unwanted selector keys
             selector = self.uiObject.selector
 
@@ -68,7 +70,7 @@ class Session( U2_Device ):
                 uinfo = self.search_element( selector | {"className" : class_name} )
 
                 if uinfo is not None:
-                    infoLog("    Delimiter class found")
+                    infoLog(f"[{self}]    Delimiter class found")
                     break
         return uinfo
         
@@ -76,33 +78,41 @@ class Session( U2_Device ):
     # Adb functions
     def clickUI( self ):
         info = self.uinfo
-        infoLog( f"Clicking ({info['text'] or info['contentDescription']}) | {info['bounds']}" )
+        infoLog( f"[{self}] Clicking ({info['text'] or info['contentDescription']}) | {info['bounds']}" )
         adbClick( self.uinfo["bounds"] )
 
 
     def clickNoUi( self, coo:tuple[int,int] ):
         x,y = coo
-        infoLog( f"Clicking ({x}, {y})" )
+        infoLog( f"[{self}] Clicking ({x}, {y})" )
         adbClickNoUi( coo )
 
 
     def pressKey( self, key ):
         info = self.uinfo
-        infoLog( f"Pressing key ({key})" )
+        infoLog( f"[{self}] Pressing key ({key})" )
         adbKeyPress( key )
 
 
     def swipeUI( self, direction: Direction, points, duration ):
         info = self.uinfo
-        infoLog( f"Swiping ({info['text'] or info['contentDescription']}) | {direction.value} | {info['bounds']}" )
+        infoLog( f"[{self}] Swiping ({info['text'] or info['contentDescription']}) | {direction.value} | {info['bounds']}" )
 
         adbSwipeUi( self.uinfo["bounds"], direction, points, duration )
 
 
     def writeText( self ):
-        infoLog( f"Writing ({self.write_text})" )
+        infoLog( f"[{self}] Writing ({self.write_text})" )
         # Clear edit text field
         adbKeyCombo( combo = [ "KEYCODE_CTRL_LEFT", "KEYCODE_A" ], key = "KEYCODE_DEL" )
         adbType( self.write_text )
+
+
+    def saveData( self ):
+        return
+
+
+    def __str__( self ):
+        return self.name
 
 

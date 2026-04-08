@@ -32,6 +32,7 @@ class NotifLog( metaclass = Meta ):
         # Set title where tuple[0] is displayed name and tuple[1] is the attribute reference as value
         cls.titles = titles
 
+        # Default values are set to int 0
         for nick, attr in titles.items():
             setattr( cls, attr, 0 )
 

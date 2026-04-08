@@ -144,9 +144,9 @@ class U2_Device:
             except Exception:
                 retries += 1
 
-            #if retries > NotifLog.gInfo:
-            #    NotifLog.gInfo = retries
-            #    pass
+            if retries > NotifLog.g_info:
+               NotifLog.g_info = retries
+               pass
 
         return info
 

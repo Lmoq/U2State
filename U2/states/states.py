@@ -1,5 +1,4 @@
 from U2.states.state import Task_State
-from U2.states.context import Session
 from U2.debug import infoLog, debugLog, printLog
 
 
@@ -15,23 +14,28 @@ class Task_State_U2( Task_State ):
         uinfo = ctx.search_element( tfo.match_selector, tfo.match_selector_timeout )
         
         if uinfo is None and tfo.match_alt_selector:
-            infoLog( f"    <<{self}>> element not found .. using alt selector instead .." )
+            infoLog( f"[{ctx}]    <<{self}>> element not found .. using alt selector instead .." )
             
             uinfo = ctx.search_element( tfo.match_alt_selector, tfo.match_selector_timeout )
             if uinfo is None: infoLog( "    <<{self}>> alt selector not found .." )
 
         if uinfo is None:
-            infoLog( f"    <<{self}>> element not found rerunning .." )
+            infoLog( f"[{ctx}]    <<{self}>> element not found rerunning .." )
+
+            ctx.retries += 1
+            if ctx.retries > 1 and self.root_state is not None:
+                return self.root_state
+
             return self
 
         if not not tfo.class_name_delimiter:
             uinfo = ctx.search_qualified_class_names( uinfo, tfo )
             
             if not uinfo:
-                infoLog( f"    <<{self}>> specified className not found" )
+                infoLog( f"[{ctx}]    <<{self}>> specified className not found" )
                 return self
 
-        infoLog( f"Ui found ({ repr(uinfo['text'] or uinfo['contentDescription']) })" )
+        infoLog( f"[{ctx}] Ui found ({ repr(uinfo['text'] or uinfo['contentDescription']) })" )
 
         ctx.uinfo = uinfo
         self.callback( ctx )
@@ -65,11 +69,11 @@ class Check( Task_State ):
         ui = ctx.waitElement( tfo.check_selector, tfo.check_selector_timeout )
         
         if ui is None:
-            infoLog( f"    <<Check selector>> not found reverting to <<{self.current_state}>>" )
+            infoLog( f"[{ctx}]    <<Check selector>> not found reverting to <<{self.current_state}>>" )
             return self.root_state or self.current_state
 
         elif ui == "FAILED":
-            infoLog( f"Check error" )
+            infoLog( f"[{ctx}]    <<Check error>>" )
             return self
 
         return self.next_state

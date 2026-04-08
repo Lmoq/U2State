@@ -83,7 +83,7 @@ def get_elements( device: "U2_Device" = None, instance_range: int|tuple = None, 
         ui = device.waitElement( selector = { "className" : class_name.value, "instance" : i }, timeout = timeout )
 
         if ui in ( "FAILED", None ):
-            print( "get_elements .. Element not found" )
+            print( "get_elements .. Element not found [{ui}]" )
             continue
 
         fo = device.getInfo( ui )
@@ -153,20 +153,3 @@ def get_elements( device: "U2_Device" = None, instance_range: int|tuple = None, 
             cv.imwrite( image_path.with_stem( file_name ), cv_image )
 
     return captured if capture_output and captured else None
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
