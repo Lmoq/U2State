@@ -1,12 +1,13 @@
 import cv2 as cv, time
 from U2.Bots.msbot import MSCheck
-from U2.states import Click, Wait, Write, Swipe, Check
+from U2.states import Handler, Click, Wait, Write, Swipe, Check
 from U2.task import Task_Info
 
 from U2.debug import printLog, infoLog, debugLog, snip_screen
 from U2.adb_tools import adbSwipeUi, vibrate
 from U2.notif import NotifLog
 
+from U2.process import system_type
 from U2.enums import Wtype, Direction
 from U2.time import Stime, timenow
 
@@ -34,59 +35,82 @@ class Question( Wait ):
             ctx.restart_timer.reset()
             # printLog( f"Scheduled restart {Stime()}" )
 
+        ctx.setPointsData( ctx.points )
+
+        timeout = 3
+        timeout = tfo.match_selector_timeout if ctx.retries < 1 else 3
+        time_wait = ctx.next_time_wait
+
+        if time_wait:
+            current_time = time.time()
+            timeout = ( ctx.next_time_wait - current_time ) if time_wait > current_time else 3
+
+        # print( f"[{ctx}] Searching Question timeout : {timeout}" )
 
         # Main selector search
-        uinfo = ctx.search_sibling_element( tfo.emoji_button, tfo.match_selector, tfo.match_selector_timeout )
+        uinfo = ctx.search_sibling_element( tfo.emoji_button, tfo.match_selector, timeout )
         if uinfo is None:
-            infoLog( f"    <<Question not found>>" )
+            infoLog( f"[{ctx}]    <<Question not found>>" )
 
             ctx.retries += 1
-            printLog( f"Retries : { ctx.retries }" )
+            printLog( f"[{ctx}] Retries : { ctx.retries }" )
 
-            if ctx.retries > 1:
+            if ctx.retries > 2:
+                sign = ctx.search_element( ctx.restricted_ui, 3 )
+                if sign is None:
+                    return self
+                else:
+                    Handler.sig_term = True
+                    log = f"[{ctx}] Restriction ui found"
+                    
+                    infoLog( log )
+                    debugLog( log )
+
+            elif ctx.retries > 1:
                 ctx.restartTarget( ctx.tab_instance_number )
-
             else:
                 in_target_app = ctx.device.wait_activity( ctx.launch_activity.split('/')[1], timeout=1 )
 
                 if in_target_app:
                     adbSwipeUi( ctx.screen_dimension, Direction.up, 500 )
+                    print( f"[{ctx}] Swiping retries:{ctx.retries}" )
 
             ctx.failed_cycle = True
             return self
 
         ctx.cycle_timer.track_interval()
+        ctx.task_timer.track_interval()
 
-        if not ctx.failed_cycle and ctx.cycle_timer.track_calls > 0 and ctx.cycle_timer < 25:
+        if ( not ctx.failed_cycle and ctx.cycle_timer.track_calls > 0 and ctx.cycle_timer < 25 ) or uinfo['text'] == ctx.question_ui:
             # Handle sudden reappearance of target ui to prevent spam
             snip_screen( name = "sudden", unique = True )
-            log = f"Sudden reappearance of target ui {timenow()}"
+            log = f"[{ctx}] Reappearance of target ui {timenow()}"
 
             infoLog( log )
             debugLog( log )
             printLog( log )
 
+            NotifLog.snip_sudden += 1
+
             # Save previous check image data
-            if ctx.snip_send and ctx.snip_data is not None:
-                dst, image = ctx.snip_data
-                cv.imwrite( dst, image )
-                print( f"Saved previous buffer to : {dst}" )
+            ctx.saveData()
 
             ctx.restartTarget( ctx.tab_instance_number )
             ctx.cycle_timer.reset()
 
             ctx.debug_snip = True
+            ctx.question_ui = "N/A"
             return self
 
         ctx.uinfo = uinfo
-        infoLog( f"Question : {ctx.uinfo['text']}" )
+        infoLog( f"[{ctx}] Question : {ctx.uinfo['text']}" )
         answered = self.callback( ctx )
 
 
         # Check if local db is synced with latest info
         p_uinfo = ctx.search_element( {"textContains" : f"Bot Income:"}, tfo.ps_timeout )
         if p_uinfo is None:
-            log = f"    <<Pinfo not found>> {Stime()}"
+            log = f"[{ctx}]    <<Pinfo not found>> {Stime()}"
 
             printLog( log )
             infoLog( log )
@@ -96,14 +120,14 @@ class Question( Wait ):
         else:
             prev_points = int( get_points( p_uinfo["text"] ) )
 
-            log = f"Local : {ctx.points} Pinfo : {prev_points}"
+            log = f"[{ctx}] Local : {ctx.points} Pinfo : {prev_points}"
             infoLog( log )
 
             if prev_points != ctx.points:
                 vibrate( 0.5, 2 )
 
                 recent = Stime()
-                log = f"Db[{ctx.points}] P[{prev_points}] {recent}"
+                log = f"[{ctx}] Db[{ctx.points}] P[{prev_points}] {recent}"
 
                 printLog( log )
                 infoLog( log )
@@ -125,6 +149,8 @@ class Question( Wait ):
 
         ctx.write_text = answer
         ctx.failed_cycle = False
+
+        ctx.question_ui = question
         ctx.retries = 0
 
         return True
@@ -215,7 +241,7 @@ class ECCheck( MSCheck ):
                 snip_screen( name = "send_sudden", unique = True )
                 ctx.debug_snip = False
 
-        if ctx.snip_send and self.desc == "Check task for Click Send Button":
+        if system_type == "Linux" and ctx.snip_send and self.desc == "Check task for Click Send Button":
             uinfo = ctx.getInfo( ctx.uiObject )
 
             ctx.snip_data = snip_screen( 

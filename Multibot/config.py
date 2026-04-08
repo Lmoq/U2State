@@ -5,13 +5,24 @@ from U2.time import Stime
 DataJson = {}
 BotList = []
 BotDis = []
+BuffList = []
 
 
 def extractJsonData( bot_list, out_json ):
     # Save Bot attributes to outjson
     base_json = {
+        "state_index" : 0,
+        "next_time_wait" : 0.0,
+
         "points" : 0.0,
         "points_limit" : 0,
+
+        "points_data" : {
+            "initial" : 0,
+            "current" : 0,
+            "start" : 0,
+            "end" : 0
+        },
         
         "start_time_restriction" : "",
         "end_time_restriction" : "",

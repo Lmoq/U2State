@@ -10,23 +10,22 @@ from U2.time import Stime
 from U2.Bots.msbot import MSBot
 from U2.states import Handler
 
-from U2.debug import Logger, infoLog
 from U2.process import system_type, start_adb_shell_pipes
 from U2.adb_tools import switch_keyboard
 
+from U2.debug import Logger, infoLog, printLog
 from U2.notif import notif, NotifLog
 
 from bot_handler import Bot_Handler
 from config import extractJsonData, loadJson, saveJson
-import config
 from utils import rs_main, toggle_keyboard, switchFocus, updateShellNotif
 
 from ecnl.main import Bot as ECNL
-from ecnl.states import Question
-#from decoy.main import Bot as DECOY
-
+from lecb.main import Bot as LECB
 from pprint import pp
+
 import logging
+import config
 
 
 def exec():
@@ -36,17 +35,17 @@ def exec():
     # Load bot handlers with Handlers
     B1 = Bot_Handler( ECNL )
 
-    B1.name = "🌜ECNL🌜"
+    B1.name = ECNL.ctx.name
     B1.key_name = "ECNL"
     # --------------------
     
-    #B2 = Bot_Handler( DECOY )
+    B2 = Bot_Handler( LECB )
 
-    #B2.name = "🌜DECOY🌜"
-    #B2.key_name = "DECOY"
+    B2.name = LECB.ctx.name
+    B2.key_name = "LECB"
     # --------------------
     
-    tmp = [ B1 ]
+    tmp = [ B1, B2 ]
 
     # Set tab instance number based on list order
     for i in range( len(tmp) ):
@@ -64,8 +63,16 @@ def exec():
         
         if bot.bot.ctx.restricted:
             # Append to discarded list
+            print( f"[{bot}] is currently restricted" )
             config.BotDis.append( bot )
             continue
+
+        bot.bot.current_state = bot.bot.states_list[ bot.bot.ctx.state_index ]
+        bot.next_time_wait = bot.bot.ctx.next_time_wait
+        time_stamp = time.strftime( "%H:%M:%S", time.localtime( bot.next_time_wait ) )
+
+        print( f"[{bot}] Current state : {bot.bot.current_state} time_wait : {time_stamp}" )
+        print( f"[{bot}] restriction start : {bot.bot.ctx.start_time_restriction} end : {bot.bot.ctx.end_time_restriction}")
 
         # Add to botlist if not time restricted
         config.BotList.append( bot )
@@ -92,14 +99,36 @@ def exec():
             Bot.bot.ctx.active = True
             Bot.bot.state_loop()
 
-            Bot.next_time_wait = Bot.bot.ctx.get_current_state_wait_time( Bot.bot.current_state )
-            #print( f"wait time : {Bot.next_time_wait}" )
+            time_wait = Bot.bot.ctx.get_current_state_wait_time( Bot.bot.current_state )
+
+            Bot.next_time_wait = time.time() + time_wait
+            Bot.bot.ctx.next_time_wait = Bot.next_time_wait
+
+            if not Bot.next_time_wait:
+                print( f"!!![{Bot}] current_state : {Bot.bot.current_state} next_wait_time : {time_wait}!!!" )
+                Handler.sig_term = True
+                break
 
             if Handler.sig_term:
                 print( "Sigterm..")
                 continue
 
-            # Choose the quickest wait time if all Bots have complete a cycle
+            # Allow lifting restriction of suspended bots
+            for bot in config.BotDis:
+
+                ctx = bot.bot.ctx
+                ctx.restricted = ctx.timeRestricted() or ctx.pointsReachedLimit()
+
+                if not ctx.restricted:
+                    print( f"Restriction lifted for {bot}" )
+                    config.BuffList.append( bot )
+
+            if config.BuffList:
+                # Transfer items from BotDis to BotList
+                [ config.BotList.append( config.BotDis.pop( config.BotDis.index( Bot ) ) ) for Bot in config.BuffList ]
+                config.BuffList.clear()
+
+            # Choose the quickest wait time if all Bots have completed a cycle
             if all( b.next_time_wait for b in config.BotList ):
 
                 config.BotList = sorted( config.BotList, key=lambda b : b.next_time_wait )
@@ -108,7 +137,7 @@ def exec():
                 ctx = Bot.bot.ctx
                 next_ctx = next_bot.bot.ctx
 
-                # Check if restriction flag flipped from checking time and points limit
+                # Check if restriction flag was toggled from checking time and points limit
                 if next_ctx.restricted:
 
                     # Move bot from discarded list
@@ -116,7 +145,6 @@ def exec():
 
                     if not config.BotList: 
                         break 
-
                     next_bot = config.BotList[0]
 
                 restarted = False
@@ -124,7 +152,7 @@ def exec():
                 # Check duration of cycles, if it has slowed down restart target app
                 if not ctx.restricted and ctx.intervalExceed():
 
-                    # Restart target with or without clicking tab UI, then disable press_back incase switchFocus will be called
+                    # Restart target with or without clicking tab UI, then disable press_back for switchFocus incase it will be called
                     ctx.restartTarget( 
                         ctx.tab_instance_number, 
                         include_click = False if Bot != next_bot else True )
@@ -160,9 +188,8 @@ def main():
     start_adb_shell_pipes( system_type )
 
     NotifLog.set_title({
-        "DB" : "db_points",
-        "LV" : "live_points",
-        "RC" : "recent_desync"
+        "SS" : "snip_sudden",
+        "GI" : "g_info",
     })
 
     if system_type == "Linux":

@@ -11,15 +11,14 @@ try:
 except:
     from states import states_list
     from context import CTX
-    
-ctx = CTX()
-ctx.state_points_add = states_list[-1]
 
+ctx = CTX()
+ctx.state_points_add = states_list[1]
 
 Bot = Handler( context = ctx )
 
 Bot.chain_states( states_list, loop = True )
-Bot.set_state( states_list[0], [states_list[-1]], states_list )
+Bot.set_state( states_list[0], [ states_list[1], states_list[3] ], states_list )
 
 def main():
     import uiautomator2 as u2
