@@ -192,14 +192,14 @@ def main():
         "GI" : "g_info",
     })
 
-    if system_type == "Linux":
+    if system_type in ["Linux","Android"]:
         notif(
             title = "Maccazudon",
             b1 = "Jdon", b1_action = toggle_keyboard,
             b2 = "Our Soul", b2_action = rs_main,
             prio = "low"
         )
-
+    NotifLog.info_stdout = True
     switch_keyboard( "off" ) 
     exec()
     switch_keyboard( "on" ) 

@@ -46,7 +46,7 @@ class CTX( MSBot ):
 
     def saveData( self ):
         infoLog( f"[{self}] Attempting snip data save[snip_send:{'True' if self.snip_send else 'False'}] [snip_data:{'Exists' if self.snip_data is not None else 'None'}]")
-        if system_type == "Linux" and self.snip_send and self.snip_data is not None:
+        if system_type in ["Linux","Android"] and self.snip_send and self.snip_data is not None:
             dst, image = self.snip_data
             cv.imwrite( dst, image )
             infoLog( f"[{self}] Saved previous buffer to : {dst}" )

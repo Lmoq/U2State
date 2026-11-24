@@ -1,4 +1,4 @@
-import cv2 as cv, time
+import cv2 as cv, time, random
 from U2.Bots.msbot import MSCheck
 from U2.states import Handler, Click, Wait, Write, Swipe, Check
 from U2.task import Task_Info
@@ -104,6 +104,10 @@ class Question( Wait ):
 
         ctx.uinfo = uinfo
         infoLog( f"[{ctx}] Question : {ctx.uinfo['text']}" )
+        
+        num = random.randint( 2,4 )
+        time.sleep(num)
+        
         answered = self.callback( ctx )
 
 
@@ -148,6 +152,7 @@ class Question( Wait ):
             return False
 
         ctx.write_text = answer
+        print(f"Assigning write_text to : {answer}")
         ctx.failed_cycle = False
 
         ctx.question_ui = question
@@ -210,6 +215,7 @@ class ClickSend( Click ):
 
     def callback( self, ctx ):
         super().callback( ctx )
+        print(f"Clicked Send Check text : {ctx.write_text}")
         self.task_info.check_selector = { "text" : ctx.write_text, "className" : Wtype.text.value }
 
 
@@ -241,7 +247,7 @@ class ECCheck( MSCheck ):
                 snip_screen( name = "send_sudden", unique = True )
                 ctx.debug_snip = False
 
-        if system_type == "Linux" and ctx.snip_send and self.desc == "Check task for Click Send Button":
+        if system_type in ["Linux","Android"] and ctx.snip_send and self.desc == "Check task for Click Send Button":
             uinfo = ctx.getInfo( ctx.uiObject )
 
             ctx.snip_data = snip_screen( 
