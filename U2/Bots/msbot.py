@@ -184,7 +184,7 @@ class MSCheck( Check ):
         ui = ctx.waitElement( tfo.check_selector, tfo.check_selector_timeout )
 
         if ui is None:
-            infoLog( f"[{ctx}]    <<Check selector>> not found reverting to <<{self.current_state}>>" )
+            infoLog( f"[{ctx}]    <<Check selector>> not found [[{tfo.check_selector}]] reverting to <<{self.current_state}>>" )
             snip_screen( name = self.desc, unique = True )
 
             # Return to root state if possible

@@ -124,6 +124,9 @@ def _set_process_caller( system_type ):
         case "Linux":
             print("Linux preset preset for adb calls")
             return bash_preset
+        case "Android":
+            print("Linux preset preset for adb calls")
+            return bash_preset
 
 exec_ = _set_process_caller( system_type )
 

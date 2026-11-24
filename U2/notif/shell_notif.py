@@ -99,5 +99,8 @@ def _set_process_caller( system_type ):
         case "Linux":
             print(f"Notif using linux preset for [{system_type}]")
             return bash_preset
+        case "Android":
+            print(f"Notif using linux preset for [{system_type}]")
+            return bash_preset
 
 _exec = _set_process_caller( system_type )

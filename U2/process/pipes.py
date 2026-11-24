@@ -19,7 +19,7 @@ def check_fifo_pipe( pipe_name ):
 def start_adb_shell_pipes( system_type: str = None ):
     assert system_type != None, "Providing operating system type is required"
 
-    if system_type != "Linux":
+    if system_type not in ["Linux","Android"]:
         print(f"System[{system_type}] is not Linux, pipes won't be used")
         return
 
